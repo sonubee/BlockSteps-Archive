@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
                 .addOnConnectionFailedListener(this)
                 .build();
 
+        //Send Transaction
         new SendPush(getApplicationContext());
     }
 
