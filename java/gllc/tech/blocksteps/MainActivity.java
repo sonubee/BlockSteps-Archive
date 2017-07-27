@@ -27,6 +27,10 @@ import com.google.android.gms.fitness.request.OnDataPointListener;
 import com.google.android.gms.fitness.request.SensorRequest;
 import com.google.android.gms.fitness.result.DataSourcesResult;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 
@@ -38,8 +42,6 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
     private static final String AUTH_PENDING = "auth_state_pending";
     private boolean authInProgress = false;
     private GoogleApiClient mApiClient;
-
-    String ethAddress = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
                 .build();
 
         //Send Transaction
-        new SendPush(getApplicationContext());
+        //new SendPush(getApplicationContext());
     }
 
     @Override
@@ -98,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
                     @Override
                     public void onResult(Status status) {
                         if (status.isSuccess()) {
-                            Log.e( "GoogleFit", "SensorApi successfully added" );
+                            Log.i( "--All", "SensorApi successfully added" );
                         }
                     }
                 });
@@ -119,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
 
             }
         } else {
-            Log.e( "GoogleFit", "authInProgress" );
+            Log.e( "--All", "authInProgress" );
         }
 
     }
@@ -153,22 +155,26 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
                     mApiClient.connect();
                 }
             } else if( resultCode == RESULT_CANCELED ) {
-                Log.e( "GoogleFit", "RESULT_CANCELED" );
+                Log.e( "--All", "RESULT_CANCELED" );
             }
         } else {
-            Log.e("GoogleFit", "requestCode NOT request_oauth");
+            Log.e("--All", "requestCode NOT request_oauth");
         }
     }
 
     private void checkEthereumAddress() {
         SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
 
-        ethAddress = sharedPref.getString("ethAddress","none");
+        MyApplication.ethAddress = sharedPref.getString("ethAddress","none");
 
-        if (ethAddress.equals("none")) {
-            getEthAddress();
+        if (MyApplication.ethAddress.equals("none")) {
+            Log.i("--All", "Requesting ethAddress");
+            List<Object> params = new ArrayList<>();
+            params.add("hellya");
+            new ContactBlockchain().execute("personal_newAccount",params,99, sharedPref);
         }
 
+        else Log.i("--All", "Already Have ethAddress");
 
     }
 }
