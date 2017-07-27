@@ -1,8 +1,10 @@
 package gllc.tech.blocksteps;
 
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -37,10 +39,14 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
     private boolean authInProgress = false;
     private GoogleApiClient mApiClient;
 
+    String ethAddress = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        checkEthereumAddress();
 
         if (savedInstanceState != null) {
             authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
@@ -152,5 +158,17 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
         } else {
             Log.e("GoogleFit", "requestCode NOT request_oauth");
         }
+    }
+
+    private void checkEthereumAddress() {
+        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+
+        ethAddress = sharedPref.getString("ethAddress","none");
+
+        if (ethAddress.equals("none")) {
+            getEthAddress();
+        }
+
+
     }
 }
