@@ -42,11 +42,18 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
     private static final String AUTH_PENDING = "auth_state_pending";
     private boolean authInProgress = false;
     private GoogleApiClient mApiClient;
+    SharedPreferences sharedPref;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        sharedPref = getPreferences(Context.MODE_PRIVATE);
+
+        //String hex = Integer.toHexString(72417);
+        //Log.i("--All", "Hex: " + hex);
+        //Log.i("--All", "FIIIIIIIIIIIIIIIIIINDMEEEE" + Integer.parseInt(hex,16));
 
         checkEthereumAddress();
 
@@ -61,8 +68,7 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
                 .addOnConnectionFailedListener(this)
                 .build();
 
-        //Send Transaction
-        //new SendPush(getApplicationContext());
+
     }
 
     @Override
@@ -134,7 +140,8 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
                 @Override
                 public void run() {
                     Toast.makeText(getApplicationContext(), "Field: " + field.getName() + " Value: " + value, Toast.LENGTH_SHORT).show();
-                    //new SendPush(getApplicationContext());
+
+
                 }
             });
         }
@@ -143,7 +150,7 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
     @Override
     protected void onStart() {
         super.onStart();
-        mApiClient.connect();
+        //mApiClient.connect();
     }
 
     @Override
@@ -163,7 +170,6 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
     }
 
     private void checkEthereumAddress() {
-        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
 
         MyApplication.ethAddress = sharedPref.getString("ethAddress","none");
 
@@ -171,10 +177,21 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
             Log.i("--All", "Requesting ethAddress");
             List<Object> params = new ArrayList<>();
             params.add("hellya");
-            new ContactBlockchain().execute("personal_newAccount",params,99, sharedPref);
+            new ContactBlockchain().execute("personal_newAccount",params,99, sharedPref, "NA");
+            Toast.makeText(getApplicationContext(),"Getting New Address",Toast.LENGTH_SHORT).show();
         }
 
-        else Log.i("--All", "Already Have ethAddress");
+        else {
+            Log.i("--All", "Already Have ethAddress");
 
+            List<Object> params = new ArrayList<>();
+            params.add(MyApplication.ethAddress);
+            params.add("hellya");
+            params.add(0);
+
+            new ContactBlockchain().execute("personal_unlockAccount",params,99, sharedPref,"personalUnlock");
+
+            Toast.makeText(getApplicationContext(),"Already Have Address - Unlocking",Toast.LENGTH_SHORT).show();
+        }
     }
 }
