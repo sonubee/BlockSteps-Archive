@@ -18,11 +18,13 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.fitness.Fitness;
 import com.google.android.gms.fitness.data.DataPoint;
+import com.google.android.gms.fitness.data.DataSet;
 import com.google.android.gms.fitness.data.DataSource;
 import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Field;
@@ -30,6 +32,7 @@ import com.google.android.gms.fitness.data.Value;
 import com.google.android.gms.fitness.request.DataSourcesRequest;
 import com.google.android.gms.fitness.request.OnDataPointListener;
 import com.google.android.gms.fitness.request.SensorRequest;
+import com.google.android.gms.fitness.result.DailyTotalResult;
 import com.google.android.gms.fitness.result.DataSourcesResult;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
@@ -68,6 +71,8 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        new VerifyDataTask().execute();
+
         sharedPref = getPreferences(Context.MODE_PRIVATE);
 
         day1Steps = (TextView)findViewById(R.id.day1Steps);
@@ -89,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
 
         mApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Fitness.SENSORS_API)
+                .addApi(Fitness.HISTORY_API)
                 .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ_WRITE))
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
@@ -132,6 +138,8 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
                 sendStepsList.add(sendStepsMap);
                 //Log.i("--All", sendStepsList.toString());
                 new ContactBlockchain().execute("eth_sendTransaction",sendStepsList,99, sharedPref,"sentSteps");
+
+
 
 /*
                 List<Object> sendStepsList = new ArrayList<>();
@@ -228,7 +236,7 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
     @Override
     protected void onStart() {
         super.onStart();
-        //mApiClient.connect();
+        mApiClient.connect();
     }
 
     @Override
@@ -279,7 +287,7 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
         String extra;
         SharedPreferences sharedPref;
         //TextView displaySteps;
-        String day = "";
+        int day=1;
 
         @Override
         protected JSONRPC2Response doInBackground(Object... objects) {
@@ -300,7 +308,7 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
             extra = (String)objects[4];
 
             if (extra.equals("getSteps")) {
-                day = (String)objects[5];
+                day = (Integer)objects[5];
             }
 
             Log.i("--All", "Method: " + method + " - Extra: " + extra);
@@ -370,6 +378,10 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
 
                 if (method.equals("personal_unlockAccount") && extra.equals("personalUnlock")) {
 
+                    for (int i=0; i>=-2; i--) {
+                        getSteps(i);
+                    }
+
                     //Getting Steps
                     /*
                     List<Object> getStepsList = new ArrayList<>();
@@ -382,6 +394,7 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
                     Log.i("--All", getStepsList.toString());
                     new ContactBlockchain().execute("eth_call",getStepsList,99, sharedPref,"getSteps");
 */
+                    /*
                     Calendar calendar = Calendar.getInstance();
                     calendar.add(Calendar.DAY_OF_YEAR, -3);
                     SimpleDateFormat format = new SimpleDateFormat("MMddyy");
@@ -415,7 +428,7 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
                     getStepsList.add("latest");
                     Log.i("--All", getStepsList.toString());
                     new ContactBlockchain().execute("eth_call",getStepsList,99, sharedPref,"getSteps");
-
+*/
                 }
 
                 if (method.equals("eth_sendTransaction") && extra.equals("sentSteps")) {
@@ -425,8 +438,11 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
                 if (method.equals("eth_call") && extra.equals("getSteps")) {
 
                     int i = Integer.parseInt(response.getResult().toString().substring(2),16);
-                    Log.i("--All", "Steps = " + i);
-                    day1Steps.setText("Your Steps = " + i);
+                    Log.i("--All", "Day: " + day + " - Steps = " + i);
+
+                    if (day == 0) day1Steps.setText("Today Steps = " + i);
+                    if (day == -1) day2Steps.setText("Yesterday Steps = " + i);
+                    if (day == -2) day3Steps.setText("2 Days Ago Steps = " + i);
                 }
 
             }
@@ -468,7 +484,30 @@ public class MainActivity extends AppCompatActivity implements OnDataPointListen
         getStepsList.add(getStepsMap);
         getStepsList.add("latest");
         Log.i("--All", getStepsList.toString());
-        new ContactBlockchain().execute("eth_call",getStepsList,99, sharedPref,"getSteps");
+
+        new ContactBlockchain().execute("eth_call",getStepsList,99, sharedPref,"getSteps",day);
+    }
+
+    private class VerifyDataTask extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            Log.i("--All", "FIIIIIIIIIIIIIIIIIINDMEEEE");
+            long total = 0;
+
+            PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_STEP_COUNT_DELTA);
+            DailyTotalResult totalResult = result.await(30, TimeUnit.SECONDS);
+            if (totalResult.getStatus().isSuccess()) {
+                DataSet totalSet = totalResult.getTotal();
+                total = totalSet.isEmpty()
+                        ? 0
+                        : totalSet.getDataPoints().get(0).getValue(Field.FIELD_STEPS).asInt();
+            } else {
+                Log.w("--All", "There was a problem getting the step count.");
+            }
+
+            Log.i("--All", "Total steps: " + total);
+
+            return null;
+        }
     }
 
 }
