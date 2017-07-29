@@ -1,6 +1,8 @@
 package gllc.tech.blocksteps;
 
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -79,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-       // new VerifyDataTask().execute();
+
 
         sharedPref = getPreferences(Context.MODE_PRIVATE);
 
@@ -89,10 +91,6 @@ public class MainActivity extends AppCompatActivity {
         getDate = (EditText)findViewById(R.id.enterDate);
         getSteps = (EditText)findViewById(R.id.enterSteps);
         sendSteps = (Button)findViewById(R.id.sendSteps);
-
-        //String hex = Integer.toHexString(72417);
-        //Log.i("--All", "Hex: " + hex);
-        //Log.i("--All", "FIIIIIIIIIIIIIIIIIINDMEEEE" + Integer.parseInt(hex,16));
 
         checkEthereumAddress();
 
@@ -141,17 +139,6 @@ public class MainActivity extends AppCompatActivity {
                 sendStepsList.add(sendStepsMap);
                 //Log.i("--All", sendStepsList.toString());
                 new ContactBlockchain().execute("eth_sendTransaction",sendStepsList,99, sharedPref,"sentSteps");
-
-/*
-                List<Object> sendStepsList = new ArrayList<>();
-                Map sendStepsMap = new HashMap();
-                sendStepsMap.put("from", MyApplication.ethAddress);
-                sendStepsMap.put("to",MyApplication.contractAddress);
-                sendStepsMap.put("data","0xd4caa4db00000000000000000000000000000000000000000000000000000000000000090000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000511AE100000000000000000000000000000000000000000000000000000000000");
-                sendStepsList.add(sendStepsMap);
-                //Log.i("--All", params.toString());
-                new ContactBlockchain().execute("eth_sendTransaction",sendStepsList,99, sharedPref,"sentSteps");
-                */
             }
         });
 
@@ -282,58 +269,9 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 if (method.equals("personal_unlockAccount") && extra.equals("personalUnlock")) {
-
                     for (int i=0; i>=-2; i--) {
                         getSteps(i);
                     }
-
-                    //Getting Steps
-                    /*
-                    List<Object> getStepsList = new ArrayList<>();
-                    Map getStepsMap = new HashMap();
-                    getStepsMap.put("from", MyApplication.ethAddress);
-                    getStepsMap.put("to",MyApplication.contractAddress);
-                    getStepsMap.put("data","0x5c6718730000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000511AE100000000000000000000000000000000000000000000000000000000000");
-                    getStepsList.add(getStepsMap);
-                    getStepsList.add("latest");
-                    Log.i("--All", getStepsList.toString());
-                    new ContactBlockchain().execute("eth_call",getStepsList,99, sharedPref,"getSteps");
-*/
-                    /*
-                    Calendar calendar = Calendar.getInstance();
-                    calendar.add(Calendar.DAY_OF_YEAR, -3);
-                    SimpleDateFormat format = new SimpleDateFormat("MMddyy");
-                    String formattedDate = format.format(calendar.getTime());
-                    if (formattedDate.length() == 6) {formattedDate = formattedDate.substring(1);}
-                    Log.i("--All", "Day: " + formattedDate);
-
-                    //Position of Date in bytes
-                    String first64 = "0000000000000000000000000000000000000000000000000000000000000020";
-                    //Length of Date
-                    int dateLength = formattedDate.length();
-                    Log.i("--All", "DateLength: " + dateLength);
-                    String dateLengthHex = Integer.toHexString(dateLength);
-                    dateLengthHex = StringUtils.leftPad(dateLengthHex,64,"0");
-                    Log.i("--All", "DateLength in Hex: " + dateLengthHex);
-                    String second64 = dateLengthHex;
-                    //Date in Hex
-                    String hexDate = Integer.toHexString(Integer.parseInt(formattedDate));
-                    hexDate = StringUtils.rightPad(hexDate,64,"0");
-                    Log.i("--All", "Date in Hex: " + hexDate);
-                    String third64 = hexDate;
-
-                    String data = "0x5c671873"+first64+second64+third64;
-
-                    List<Object> getStepsList = new ArrayList<>();
-                    Map getStepsMap = new HashMap();
-                    getStepsMap.put("from", MyApplication.ethAddress);
-                    getStepsMap.put("to",MyApplication.contractAddress);
-                    getStepsMap.put("data",data);
-                    getStepsList.add(getStepsMap);
-                    getStepsList.add("latest");
-                    Log.i("--All", getStepsList.toString());
-                    new ContactBlockchain().execute("eth_call",getStepsList,99, sharedPref,"getSteps");
-*/
                 }
 
                 if (method.equals("eth_sendTransaction") && extra.equals("sentSteps")) {
@@ -407,6 +345,10 @@ public class MainActivity extends AppCompatActivity {
                                 // Look at some data!!
                                 //new InsertAndVerifyDataTask().execute();
                                 new VerifyDataTask().execute();
+
+                                //launchTestService();
+                                scheduleAlarm();
+                                //dailyAlarm();
                             }
 
                             @Override
@@ -575,10 +517,53 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     //Your code to run in GUI thread here
-                    Toast.makeText(getApplicationContext(), "Total steps1: " + finalTotal, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Yesterday Steps: " + finalTotal, Toast.LENGTH_SHORT).show();
                 }//public void run() {
             });
             return null;
         }
+    }
+
+    public void launchTestService() {
+        // Construct our Intent specifying the Service
+        Intent i = new Intent(this, MyTestService.class);
+        // Add extras to the bundle
+        i.putExtra("foo", "bar");
+        // Start the service
+        startService(i);
+    }
+
+    public void scheduleAlarm() {
+        // Construct an intent that will execute the AlarmReceiver
+        Intent intent = new Intent(getApplicationContext(), MyAlarmReceiver.class);
+        // Create a PendingIntent to be triggered when the alarm goes off
+        final PendingIntent pIntent = PendingIntent.getBroadcast(this, MyAlarmReceiver.REQUEST_CODE,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        // Setup periodic alarm every every half hour from this point onwards
+        long firstMillis = System.currentTimeMillis(); // alarm is set right away
+        AlarmManager alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+        // First parameter is the type: ELAPSED_REALTIME, ELAPSED_REALTIME_WAKEUP, RTC_WAKEUP
+        // Interval can be INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR, INTERVAL_DAY
+        alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis,
+                AlarmManager.INTERVAL_FIFTEEN_MINUTES, pIntent);
+    }
+
+    public void dailyAlarm() {
+        // Construct an intent that will execute the AlarmReceiver
+        Intent intent = new Intent(getApplicationContext(), MyAlarmReceiver.class);
+        // Create a PendingIntent to be triggered when the alarm goes off
+        final PendingIntent pIntent = PendingIntent.getBroadcast(this, MyAlarmReceiver.REQUEST_CODE,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        // Set the alarm to start at approximately 2:00 p.m.
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.set(Calendar.HOUR_OF_DAY, 14);
+
+        AlarmManager alarmMgr = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+
+        // With setInexactRepeating(), you have to use one of the AlarmManager interval
+        // constants--in this case, AlarmManager.INTERVAL_DAY.
+        alarmMgr.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
+                AlarmManager.INTERVAL_DAY, pIntent);
     }
 }
