@@ -213,80 +213,6 @@ public class MainActivity extends AppCompatActivity {
         new ContactBlockchain().execute("eth_call",getStepsList,99, sharedPref,call,day);
     }
 
-    public void getPeopleCount(int day) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_YEAR, day);
-        SimpleDateFormat format = new SimpleDateFormat("MMddyy");
-        String formattedDate = format.format(calendar.getTime());
-        if (formattedDate.length() == 6) {formattedDate = formattedDate.substring(1);}
-        //Log.i("--All", "Day: " + formattedDate);
-
-        //Position of Date in bytes
-        String first64 = "0000000000000000000000000000000000000000000000000000000000000020";
-        //Length of Date
-        int dateLength = formattedDate.length();
-        //Log.i("--All", "DateLength: " + dateLength);
-        String dateLengthHex = Integer.toHexString(dateLength);
-        dateLengthHex = StringUtils.leftPad(dateLengthHex,64,"0");
-        //Log.i("--All", "DateLength in Hex: " + dateLengthHex);
-        String second64 = dateLengthHex;
-        //Date in Hex
-        String hexDate = Integer.toHexString(Integer.parseInt(formattedDate));
-        hexDate = StringUtils.rightPad(hexDate,64,"0");
-        //Log.i("--All", "Date in Hex: " + hexDate);
-        String third64 = hexDate;
-
-        String data = MyApplication.countAllPeopleDate+first64+second64+third64;
-
-        List<Object> getStepsList = new ArrayList<>();
-        Map getStepsMap = new HashMap();
-        getStepsMap.put("from", MyApplication.ethAddress);
-        getStepsMap.put("to",MyApplication.contractAddress);
-        getStepsMap.put("data",data);
-        getStepsList.add(getStepsMap);
-        getStepsList.add("latest");
-        //Log.i("--All", getStepsList.toString());
-
-        new ContactBlockchain().execute("eth_call",getStepsList,99, sharedPref,"getPeople",day);
-    }
-
-    public void getSteps(int day) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_YEAR, day);
-        SimpleDateFormat format = new SimpleDateFormat("MMddyy");
-        String formattedDate = format.format(calendar.getTime());
-        if (formattedDate.length() == 6) {formattedDate = formattedDate.substring(1);}
-        //Log.i("--All", "Day: " + formattedDate);
-
-        //Position of Date in bytes
-        String first64 = "0000000000000000000000000000000000000000000000000000000000000020";
-        //Length of Date
-        int dateLength = formattedDate.length();
-        //Log.i("--All", "DateLength: " + dateLength);
-        String dateLengthHex = Integer.toHexString(dateLength);
-        dateLengthHex = StringUtils.leftPad(dateLengthHex,64,"0");
-        //Log.i("--All", "DateLength in Hex: " + dateLengthHex);
-        String second64 = dateLengthHex;
-        //Date in Hex
-        String hexDate = Integer.toHexString(Integer.parseInt(formattedDate));
-        hexDate = StringUtils.rightPad(hexDate,64,"0");
-        //Log.i("--All", "Date in Hex: " + hexDate);
-        String third64 = hexDate;
-
-        String data = MyApplication.recallMySteps+first64+second64+third64;
-
-        List<Object> getStepsList = new ArrayList<>();
-        Map getStepsMap = new HashMap();
-        getStepsMap.put("from", MyApplication.ethAddress);
-        getStepsMap.put("to",MyApplication.contractAddress);
-        getStepsMap.put("data",data);
-        getStepsList.add(getStepsMap);
-        getStepsList.add("latest");
-        //Log.i("--All", getStepsList.toString());
-
-        new ContactBlockchain().execute("eth_call",getStepsList,99, sharedPref,"getSteps",day);
-    }
-
     private void buildFitnessClient() {
         // Create the Google API Client
         mClient = new GoogleApiClient.Builder(this)
@@ -302,8 +228,8 @@ public class MainActivity extends AppCompatActivity {
                                 //new InsertAndVerifyDataTask().execute();
                                 //new VerifyDataTask().execute();
 
-                                scheduleAlarm();
-                                //dailyAlarm();
+                                //scheduleAlarm();
+                                dailyAlarm();
                             }
 
                             @Override
