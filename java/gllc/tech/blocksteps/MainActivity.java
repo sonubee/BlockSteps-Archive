@@ -76,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
     TextView todayStepsBig;
     TextView day0Steps, day1Steps,day2Steps,day3Steps, day4Steps, day5Steps, day6Steps;
     TextView day0Title, day1Title, day2Title, day3Title, day4Title, day5Title, day6Title;
+    TextView peopleCount0, peopleCount1, peopleCount2, peopleCount3, peopleCount4, peopleCount5, peopleCount6;
 
     String uniqueID = UUID.randomUUID().toString();
 
@@ -103,6 +104,14 @@ public class MainActivity extends AppCompatActivity {
         day4Title = (TextView)findViewById(R.id.weekDayTitle4);
         day5Title = (TextView)findViewById(R.id.weekDayTitle5);
         day6Title = (TextView)findViewById(R.id.weekDayTitle6);
+
+        peopleCount0 = (TextView)findViewById(R.id.peopleCount0);
+        peopleCount1 = (TextView)findViewById(R.id.peopleCount1);
+        peopleCount2 = (TextView)findViewById(R.id.peopleCount2);
+        peopleCount3 = (TextView)findViewById(R.id.peopleCount3);
+        peopleCount4 = (TextView)findViewById(R.id.peopleCount4);
+        peopleCount5 = (TextView)findViewById(R.id.peopleCount5);
+        peopleCount6 = (TextView)findViewById(R.id.peopleCount6);
 
         checkEthereumAddress();
 
@@ -146,6 +155,43 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void getPeopleCount(int day) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_YEAR, day);
+        SimpleDateFormat format = new SimpleDateFormat("MMddyy");
+        String formattedDate = format.format(calendar.getTime());
+        if (formattedDate.length() == 6) {formattedDate = formattedDate.substring(1);}
+        //Log.i("--All", "Day: " + formattedDate);
+
+        //Position of Date in bytes
+        String first64 = "0000000000000000000000000000000000000000000000000000000000000020";
+        //Length of Date
+        int dateLength = formattedDate.length();
+        //Log.i("--All", "DateLength: " + dateLength);
+        String dateLengthHex = Integer.toHexString(dateLength);
+        dateLengthHex = StringUtils.leftPad(dateLengthHex,64,"0");
+        //Log.i("--All", "DateLength in Hex: " + dateLengthHex);
+        String second64 = dateLengthHex;
+        //Date in Hex
+        String hexDate = Integer.toHexString(Integer.parseInt(formattedDate));
+        hexDate = StringUtils.rightPad(hexDate,64,"0");
+        //Log.i("--All", "Date in Hex: " + hexDate);
+        String third64 = hexDate;
+
+        String data = MyApplication.countAllPeopleDate+first64+second64+third64;
+
+        List<Object> getStepsList = new ArrayList<>();
+        Map getStepsMap = new HashMap();
+        getStepsMap.put("from", MyApplication.ethAddress);
+        getStepsMap.put("to",MyApplication.contractAddress);
+        getStepsMap.put("data",data);
+        getStepsList.add(getStepsMap);
+        getStepsList.add("latest");
+        //Log.i("--All", getStepsList.toString());
+
+        new ContactBlockchain().execute("eth_call",getStepsList,99, sharedPref,"getPeople",day);
+    }
+
     public void getSteps(int day) {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_YEAR, day);
@@ -169,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
         //Log.i("--All", "Date in Hex: " + hexDate);
         String third64 = hexDate;
 
-        String data = "0x5c671873"+first64+second64+third64;
+        String data = MyApplication.recallMySteps+first64+second64+third64;
 
         List<Object> getStepsList = new ArrayList<>();
         Map getStepsMap = new HashMap();
@@ -198,7 +244,6 @@ public class MainActivity extends AppCompatActivity {
                                 //new InsertAndVerifyDataTask().execute();
                                 //new VerifyDataTask().execute();
 
-                                //launchTestService();
                                 //scheduleAlarm();
                                 dailyAlarm();
                             }
@@ -289,7 +334,7 @@ public class MainActivity extends AppCompatActivity {
             sharedPref = (SharedPreferences)objects[3];
             extra = (String)objects[4];
 
-            if (extra.equals("getSteps")) {
+            if (extra.equals("getSteps") || extra.equals("getPeople")) {
                 day = (Integer)objects[5];
             }
 
@@ -361,6 +406,7 @@ public class MainActivity extends AppCompatActivity {
                 if (method.equals("personal_unlockAccount") && extra.equals("personalUnlock")) {
                     for (int i=0; i>=-6; i--) {
                         getSteps(i);
+                        getPeopleCount(i);
                     }
                 }
 
@@ -407,6 +453,19 @@ public class MainActivity extends AppCompatActivity {
                         day6Steps.setText(i+"");
                         day6Title.setText(formattedDate);
                     }
+                }
+
+                if (method.equals("eth_call") && extra.equals("getPeople")) {
+
+                    int i = Integer.parseInt(response.getResult().toString().substring(2),16);
+
+                    if (day == 0 ) peopleCount0.setText(i+"");
+                    if (day == -1 ) peopleCount1.setText(i+"");
+                    if (day == -2 ) peopleCount2.setText(i+"");
+                    if (day == -3 ) peopleCount3.setText(i+"");
+                    if (day == -4 ) peopleCount4.setText(i+"");
+                    if (day == -5 ) peopleCount5.setText(i+"");
+                    if (day == -6 ) peopleCount6.setText(i+"");
                 }
 
             }

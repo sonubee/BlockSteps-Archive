@@ -98,7 +98,7 @@ public class MyTestService extends IntentService {
         //Date in Hex
         String fourth64 = hexDate;
 
-        String data = "0xd4caa4db"+first64+second64+third64+fourth64;
+        String data = MyApplication.saveMySteps+first64+second64+third64+fourth64;
 
         List<Object> sendStepsList = new ArrayList<>();
         Map sendStepsMap = new HashMap();
