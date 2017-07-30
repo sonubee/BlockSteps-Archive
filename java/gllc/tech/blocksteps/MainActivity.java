@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -57,6 +58,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static java.text.DateFormat.getDateInstance;
@@ -65,7 +67,6 @@ import static java.text.DateFormat.getTimeInstance;
 
 public class MainActivity extends AppCompatActivity {
     public static final String TAG = "--All";
-    private static final int REQUEST_OAUTH = 1;
     private static final String AUTH_PENDING = "auth_state_pending";
     private boolean authInProgress = false;
     public static GoogleApiClient mClient = null;
@@ -73,24 +74,18 @@ public class MainActivity extends AppCompatActivity {
     SharedPreferences sharedPref;
 
     TextView day1Steps,day2Steps,day3Steps;
-    EditText getDate, getSteps;
-    Button sendSteps;
+
+    String uniqueID = UUID.randomUUID().toString();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-
         sharedPref = getPreferences(Context.MODE_PRIVATE);
-
         day1Steps = (TextView)findViewById(R.id.day1Steps);
         day2Steps = (TextView)findViewById(R.id.day2Steps);
         day3Steps = (TextView)findViewById(R.id.day3Steps);
-        getDate = (EditText)findViewById(R.id.enterDate);
-        getSteps = (EditText)findViewById(R.id.enterSteps);
-        sendSteps = (Button)findViewById(R.id.sendSteps);
 
         checkEthereumAddress();
 
@@ -100,52 +95,13 @@ public class MainActivity extends AppCompatActivity {
 
         buildFitnessClient();
 
-
-        sendSteps.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                //Sending Steps
-                int steps = Integer.parseInt(getSteps.getText().toString());
-                String hexSteps = Integer.toHexString(steps);
-                hexSteps = StringUtils.leftPad(hexSteps,64,"0");
-                Log.i("--All", "Steps in Hex: " + hexSteps);
-
-                int date = Integer.parseInt(getDate.getText().toString());
-                String hexDate = Integer.toHexString(date);
-                hexDate = StringUtils.rightPad(hexDate,64,"0");
-                Log.i("--All", "Date in Hex: " + hexDate);
-
-                //Number of steps
-                String first64 = hexSteps;
-                //Position of Date in Array (64)
-                String second64 = "0000000000000000000000000000000000000000000000000000000000000040";
-                //Character length of date
-                int dateLength = getDate.getText().toString().length();
-                String dateLengthHex = Integer.toHexString(dateLength);
-                dateLengthHex = StringUtils.leftPad(dateLengthHex,64,"0");
-                Log.i("--All", "DateLength in Hex: " + dateLengthHex);
-                String third64 = dateLengthHex;
-                //Date in Hex
-                String fourth64 = hexDate;
-
-                String data = "0xd4caa4db"+first64+second64+third64+fourth64;
-
-                List<Object> sendStepsList = new ArrayList<>();
-                Map sendStepsMap = new HashMap();
-                sendStepsMap.put("from", MyApplication.ethAddress);
-                sendStepsMap.put("to",MyApplication.contractAddress);
-                sendStepsMap.put("data",data);
-                sendStepsList.add(sendStepsMap);
-                //Log.i("--All", sendStepsList.toString());
-                new ContactBlockchain().execute("eth_sendTransaction",sendStepsList,99, sharedPref,"sentSteps");
-            }
-        });
-
-
+        Log.i("--All", "Unique ID: "+uniqueID);
+        Log.i("--All", "Device ID: "+getHardwareId(this));
     }
 
-
+    public static String getHardwareId(Context context) {
+        return Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+    }
 
     private void checkEthereumAddress() {
 
@@ -281,7 +237,7 @@ public class MainActivity extends AppCompatActivity {
                 if (method.equals("eth_call") && extra.equals("getSteps")) {
 
                     int i = Integer.parseInt(response.getResult().toString().substring(2),16);
-                    Log.i("--All", "Day: " + day + " - Steps = " + i);
+                    //Log.i("--All", "Day: " + day + " - Steps = " + i);
 
                     if (day == 0) day1Steps.setText("Today Steps = " + i);
                     if (day == -1) day2Steps.setText("Yesterday Steps = " + i);
@@ -300,21 +256,21 @@ public class MainActivity extends AppCompatActivity {
         SimpleDateFormat format = new SimpleDateFormat("MMddyy");
         String formattedDate = format.format(calendar.getTime());
         if (formattedDate.length() == 6) {formattedDate = formattedDate.substring(1);}
-        Log.i("--All", "Day: " + formattedDate);
+        //Log.i("--All", "Day: " + formattedDate);
 
         //Position of Date in bytes
         String first64 = "0000000000000000000000000000000000000000000000000000000000000020";
         //Length of Date
         int dateLength = formattedDate.length();
-        Log.i("--All", "DateLength: " + dateLength);
+        //Log.i("--All", "DateLength: " + dateLength);
         String dateLengthHex = Integer.toHexString(dateLength);
         dateLengthHex = StringUtils.leftPad(dateLengthHex,64,"0");
-        Log.i("--All", "DateLength in Hex: " + dateLengthHex);
+        //Log.i("--All", "DateLength in Hex: " + dateLengthHex);
         String second64 = dateLengthHex;
         //Date in Hex
         String hexDate = Integer.toHexString(Integer.parseInt(formattedDate));
         hexDate = StringUtils.rightPad(hexDate,64,"0");
-        Log.i("--All", "Date in Hex: " + hexDate);
+        //Log.i("--All", "Date in Hex: " + hexDate);
         String third64 = hexDate;
 
         String data = "0x5c671873"+first64+second64+third64;
@@ -344,17 +300,18 @@ public class MainActivity extends AppCompatActivity {
                                 // Now you can make calls to the Fitness APIs.  What to do?
                                 // Look at some data!!
                                 //new InsertAndVerifyDataTask().execute();
-                                new VerifyDataTask().execute();
+                                //new VerifyDataTask().execute();
 
                                 //launchTestService();
-                                scheduleAlarm();
-                                //dailyAlarm();
+                                //scheduleAlarm();
+                                dailyAlarm();
                             }
 
                             @Override
                             public void onConnectionSuspended(int i) {
                                 // If your connection to the sensor gets lost at some point,
                                 // you'll be able to determine the reason and react to it here.
+                                Log.i("--All", "Disconnected!!!");
                                 if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_NETWORK_LOST) {
                                     Log.i(TAG, "Connection lost.  Cause: Network Lost.");
                                 } else if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_SERVICE_DISCONNECTED) {
@@ -439,8 +396,8 @@ public class MainActivity extends AppCompatActivity {
                 .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
                 .build();
 
-        return readRequest;
-        //return req;
+        //return readRequest;
+        return req;
     }
     /**
      * Log a record of the query result. It's possible to get more constrained data sets by
@@ -494,7 +451,7 @@ public class MainActivity extends AppCompatActivity {
     }
     // [END parse_dataset]
 
-    private class VerifyDataTask extends AsyncTask<Void, Void, Void> {
+    public class VerifyDataTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
 
             long total = 0;
@@ -517,7 +474,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     //Your code to run in GUI thread here
-                    Toast.makeText(getApplicationContext(), "Yesterday Steps: " + finalTotal, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Current Steps: " + finalTotal, Toast.LENGTH_SHORT).show();
                 }//public void run() {
             });
             return null;
@@ -544,11 +501,12 @@ public class MainActivity extends AppCompatActivity {
         AlarmManager alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
         // First parameter is the type: ELAPSED_REALTIME, ELAPSED_REALTIME_WAKEUP, RTC_WAKEUP
         // Interval can be INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR, INTERVAL_DAY
-        alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis,
-                AlarmManager.INTERVAL_FIFTEEN_MINUTES, pIntent);
+        //alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, AlarmManager.INTERVAL_FIFTEEN_MINUTES, pIntent);
+        alarm.setRepeating(AlarmManager.RTC, firstMillis, 1000 * 60, pIntent);
     }
 
     public void dailyAlarm() {
+        Log.i("--All", "Daily Alarm");
         // Construct an intent that will execute the AlarmReceiver
         Intent intent = new Intent(getApplicationContext(), MyAlarmReceiver.class);
         // Create a PendingIntent to be triggered when the alarm goes off
@@ -557,13 +515,15 @@ public class MainActivity extends AppCompatActivity {
         // Set the alarm to start at approximately 2:00 p.m.
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.set(Calendar.HOUR_OF_DAY, 14);
+        //calendar.set(Calendar.HOUR_OF_DAY, 14);
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 50);
 
         AlarmManager alarmMgr = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
 
         // With setInexactRepeating(), you have to use one of the AlarmManager interval
         // constants--in this case, AlarmManager.INTERVAL_DAY.
-        alarmMgr.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
+        alarmMgr.setInexactRepeating(AlarmManager.RTC, calendar.getTimeInMillis(),
                 AlarmManager.INTERVAL_DAY, pIntent);
     }
 }

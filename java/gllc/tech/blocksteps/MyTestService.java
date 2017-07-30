@@ -2,12 +2,20 @@ package gllc.tech.blocksteps;
 
 import android.app.Activity;
 import android.app.IntentService;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
 
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.fitness.Fitness;
+import com.google.android.gms.fitness.data.DataSet;
+import com.google.android.gms.fitness.data.DataType;
+import com.google.android.gms.fitness.data.Field;
+import com.google.android.gms.fitness.result.DailyTotalResult;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2Session;
@@ -17,18 +25,21 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static android.provider.ContactsContract.Intents.Insert.ACTION;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by bhangoo on 7/28/2017.
  */
 
 public class MyTestService extends IntentService {
+
     // Must create a default constructor
     public MyTestService() {
         // Used to name the worker thread, important only for debugging.
@@ -44,26 +55,35 @@ public class MyTestService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
 
-        sendSteps();
-
+        int steps = (int)GetTotalSteps();
+        sendSteps(steps);
     }
 
 
-    public void sendSteps() {
+    public void sendSteps(int steps) {
         // This describes what will happen when service is triggered
 
+        //Random r = new Random();
+        //int i1 = r.nextInt();
+        //int steps = i1;
+
         //Sending Steps
-        int steps = 124;
-        steps++;
-        Log.i("--All", "FIIIIIIIIIIIIIIIIIINDMEEEE-- FROM BACKGROUND SERVICE - " + steps);
+        Log.i("--All", "Send Steps from BG Service, Steps: " + steps);
         String hexSteps = Integer.toHexString(steps);
         hexSteps = StringUtils.leftPad(hexSteps,64,"0");
-        Log.i("--All", "Steps in Hex: " + hexSteps);
+        //Log.i("--All", "Steps in Hex: " + hexSteps);
 
-        int date = 72217;
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_YEAR, 0);
+        SimpleDateFormat format = new SimpleDateFormat("MMddyy");
+        String formattedDate = format.format(calendar.getTime());
+        if (formattedDate.length() == 6) {formattedDate = formattedDate.substring(1);}
+        Log.i("--All", "Sending Today Date to Server: " + formattedDate);
+        int date = Integer.parseInt(formattedDate);
+
         String hexDate = Integer.toHexString(date);
         hexDate = StringUtils.rightPad(hexDate,64,"0");
-        Log.i("--All", "Date in Hex: " + hexDate);
+        //Log.i("--All", "Date in Hex: " + hexDate);
 
         //Number of steps
         String first64 = hexSteps;
@@ -73,7 +93,7 @@ public class MyTestService extends IntentService {
         int dateLength = Integer.toString(date).length();
         String dateLengthHex = Integer.toHexString(dateLength);
         dateLengthHex = StringUtils.leftPad(dateLengthHex,64,"0");
-        Log.i("--All", "DateLength in Hex: " + dateLengthHex);
+        //Log.i("--All", "DateLength in Hex: " + dateLengthHex);
         String third64 = dateLengthHex;
         //Date in Hex
         String fourth64 = hexDate;
@@ -92,13 +112,6 @@ public class MyTestService extends IntentService {
 
 
     public class ContactBlockchain  {
-
-        String method;
-        String extra;
-        SharedPreferences sharedPref;
-        //TextView displaySteps;
-        int day=1;
-
         public  ContactBlockchain (String method, Object params,int id, String extra) {
 
             // The JSON-RPC 2.0 server URL
@@ -111,7 +124,7 @@ public class MyTestService extends IntentService {
             JSONRPC2Session mySession = new JSONRPC2Session(serverURL);
 
             // Construct new request
-            Log.i("--All", "Method: " + method + " - Extra: " + extra);
+            //Log.i("--All", "Method: " + method + " - Extra: " + extra);
 
             JSONRPC2Request request = null;
             JSONRPC2Response response = null;
@@ -128,7 +141,7 @@ public class MyTestService extends IntentService {
             catch (JSONRPC2SessionException e) {Log.e("--All", "Error Sending Request: " + e.getMessage());}
 
             if (response.indicatesSuccess()) {
-                Log.i("--All", "*******Successful Server Response: " + response.getResult() +"*******");
+                Log.i("--All", "*******Successful Server Response (From Background): " + response.getResult() +"*******");
 
                 if (method.equals("eth_sendTransaction") && extra.equals("sentSteps")) {
                     Log.i("--All", "Successfully Sent Steps");
@@ -139,5 +152,29 @@ public class MyTestService extends IntentService {
                 Log.e("--All", "Error in PostExecute: " + response.getError().getMessage());
         }
     }
+
+    public long GetTotalSteps(){
+
+        Log.i("--All", "Getting Steps from BackGround");
+
+        long total = 0;
+
+        MainActivity.mClient.connect();
+        PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(MainActivity.mClient, DataType.TYPE_STEP_COUNT_DELTA);
+        DailyTotalResult totalResult = result.await(30, TimeUnit.SECONDS);
+        if (totalResult.getStatus().isSuccess()) {
+            DataSet totalSet = totalResult.getTotal();
+            total = totalSet.isEmpty()
+                    ? 0
+                    : totalSet.getDataPoints().get(0).getValue(Field.FIELD_STEPS).asInt();
+        }else {
+            Log.w("--All", "There was a problem getting the step count in BackGround.");
+        }
+
+        Log.i("--All", "Total steps from BackGround is: " + total);
+
+        return total;
+    }
+
 }
 
