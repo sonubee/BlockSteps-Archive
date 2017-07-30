@@ -70,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String AUTH_PENDING = "auth_state_pending";
     private boolean authInProgress = false;
     public static GoogleApiClient mClient = null;
+    ArrayList<Integer> peopleCount = new ArrayList<>();
 
     SharedPreferences sharedPref;
 
@@ -77,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
     TextView day0Steps, day1Steps,day2Steps,day3Steps, day4Steps, day5Steps, day6Steps;
     TextView day0Title, day1Title, day2Title, day3Title, day4Title, day5Title, day6Title;
     TextView peopleCount0, peopleCount1, peopleCount2, peopleCount3, peopleCount4, peopleCount5, peopleCount6;
+    TextView avgPeopleSteps0, avgPeopleSteps1 , avgPeopleSteps2, avgPeopleSteps3, avgPeopleSteps4, avgPeopleSteps5, avgPeopleSteps6;
 
     String uniqueID = UUID.randomUUID().toString();
 
@@ -88,6 +90,14 @@ public class MainActivity extends AppCompatActivity {
         sharedPref = getPreferences(Context.MODE_PRIVATE);
 
         todayStepsBig = (TextView)findViewById(R.id.todayStepsLarge);
+
+        avgPeopleSteps0 = (TextView)findViewById(R.id.avgPeopleSteps0);
+        avgPeopleSteps1 = (TextView)findViewById(R.id.avgPeopleSteps1);
+        avgPeopleSteps2 = (TextView)findViewById(R.id.avgPeopleSteps2);
+        avgPeopleSteps3 = (TextView)findViewById(R.id.avgPeopleSteps3);
+        avgPeopleSteps4 = (TextView)findViewById(R.id.avgPeopleSteps4);
+        avgPeopleSteps5 = (TextView)findViewById(R.id.avgPeopleSteps5);
+        avgPeopleSteps6 = (TextView)findViewById(R.id.avgPeopleSteps6);
 
         day0Steps = (TextView)findViewById(R.id.weekSteps0);
         day1Steps = (TextView)findViewById(R.id.weekSteps1);
@@ -153,6 +163,43 @@ public class MainActivity extends AppCompatActivity {
 
             Toast.makeText(getApplicationContext(),"Already Have Address - Unlocking",Toast.LENGTH_SHORT).show();
         }
+    }
+
+    public void makeEthCall(int day, String call, String prefix) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_YEAR, day);
+        SimpleDateFormat format = new SimpleDateFormat("MMddyy");
+        String formattedDate = format.format(calendar.getTime());
+        if (formattedDate.length() == 6) {formattedDate = formattedDate.substring(1);}
+        //Log.i("--All", "Day: " + formattedDate);
+
+        //Position of Date in bytes
+        String first64 = "0000000000000000000000000000000000000000000000000000000000000020";
+        //Length of Date
+        int dateLength = formattedDate.length();
+        //Log.i("--All", "DateLength: " + dateLength);
+        String dateLengthHex = Integer.toHexString(dateLength);
+        dateLengthHex = StringUtils.leftPad(dateLengthHex,64,"0");
+        //Log.i("--All", "DateLength in Hex: " + dateLengthHex);
+        String second64 = dateLengthHex;
+        //Date in Hex
+        String hexDate = Integer.toHexString(Integer.parseInt(formattedDate));
+        hexDate = StringUtils.rightPad(hexDate,64,"0");
+        //Log.i("--All", "Date in Hex: " + hexDate);
+        String third64 = hexDate;
+
+        String data = prefix+first64+second64+third64;
+
+        List<Object> getStepsList = new ArrayList<>();
+        Map getStepsMap = new HashMap();
+        getStepsMap.put("from", MyApplication.ethAddress);
+        getStepsMap.put("to",MyApplication.contractAddress);
+        getStepsMap.put("data",data);
+        getStepsList.add(getStepsMap);
+        getStepsList.add("latest");
+        //Log.i("--All", getStepsList.toString());
+
+        new ContactBlockchain().execute("eth_call",getStepsList,99, sharedPref,call,day);
     }
 
     public void getPeopleCount(int day) {
@@ -334,7 +381,7 @@ public class MainActivity extends AppCompatActivity {
             sharedPref = (SharedPreferences)objects[3];
             extra = (String)objects[4];
 
-            if (extra.equals("getSteps") || extra.equals("getPeople")) {
+            if (extra.equals("getSteps") || extra.equals("getPeople") || extra.equals("getEveryoneSteps")) {
                 day = (Integer)objects[5];
             }
 
@@ -405,8 +452,10 @@ public class MainActivity extends AppCompatActivity {
 
                 if (method.equals("personal_unlockAccount") && extra.equals("personalUnlock")) {
                     for (int i=0; i>=-6; i--) {
-                        getSteps(i);
-                        getPeopleCount(i);
+                        //getSteps(i);
+                        makeEthCall(i,"getSteps", MyApplication.recallMySteps);
+                        makeEthCall(i,"getPeople", MyApplication.countAllPeopleDate);
+                        //makeEthCall(i, "getEveryoneSteps", MyApplication.everyoneStepsDate);
                     }
                 }
 
@@ -459,13 +508,41 @@ public class MainActivity extends AppCompatActivity {
 
                     int i = Integer.parseInt(response.getResult().toString().substring(2),16);
 
-                    if (day == 0 ) peopleCount0.setText(i+"");
+                    if (day == 0 )  peopleCount0.setText(i+"");
                     if (day == -1 ) peopleCount1.setText(i+"");
                     if (day == -2 ) peopleCount2.setText(i+"");
                     if (day == -3 ) peopleCount3.setText(i+"");
                     if (day == -4 ) peopleCount4.setText(i+"");
                     if (day == -5 ) peopleCount5.setText(i+"");
                     if (day == -6 ) peopleCount6.setText(i+"");
+
+                    int index = day * -1;
+                    peopleCount.add(index,i);
+
+                    if (day == -6){
+                        for (int j=0; j>=-6; j--) {
+                            //getSteps(i);
+                            makeEthCall(j, "getEveryoneSteps", MyApplication.everyoneStepsDate);
+                        }
+                    }
+                }
+
+                if (method.equals("eth_call") && extra.equals("getEveryoneSteps")) {
+                    int i = Integer.parseInt(response.getResult().toString().substring(2),16);
+                    int index = day * -1;
+
+                    int avgSteps;
+                    if (peopleCount.get(index) != 0) avgSteps = i / peopleCount.get(index);
+                    else avgSteps = 0;
+
+
+                    if (day == 0 ) avgPeopleSteps0.setText(avgSteps+"");
+                    if (day == -1 ) avgPeopleSteps1.setText(avgSteps+"");
+                    if (day == -2 ) avgPeopleSteps2.setText(avgSteps+"");
+                    if (day == -3 ) avgPeopleSteps3.setText(avgSteps+"");
+                    if (day == -4 ) avgPeopleSteps4.setText(avgSteps+"");
+                    if (day == -5 ) avgPeopleSteps5.setText(avgSteps+"");
+                    if (day == -6 ) avgPeopleSteps6.setText(avgSteps+"");
                 }
 
             }

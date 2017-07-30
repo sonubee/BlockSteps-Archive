@@ -14,6 +14,7 @@ public class MyApplication extends Application {
     public static final String recallMySteps = "0x8fd2f1cd";
     public static final String countAllPeopleDate = "0x8c88af22";
     public static final String saveMySteps = "0xdc5e5c0f";
+    public static final String everyoneStepsDate = "0x7a725806";
 
     public static String ethAddress = "";
 
