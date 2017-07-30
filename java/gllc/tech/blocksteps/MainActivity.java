@@ -61,6 +61,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import gllc.tech.blocksteps.Sensor.StepService;
+
 import static java.text.DateFormat.getDateInstance;
 import static java.text.DateFormat.getTimeInstance;
 
@@ -133,6 +135,15 @@ public class MainActivity extends AppCompatActivity {
 
         Log.i("--All", "Unique ID: "+uniqueID);
         Log.i("--All", "Device ID: "+getHardwareId(this));
+
+
+        if (!StepService.isIntentServiceRunning) {
+            Toast.makeText(getApplicationContext(), "Starting Service", Toast.LENGTH_SHORT).show();
+            Intent i = new Intent(this, StepService.class);
+            i.putExtra("foo", "bar");
+            startService(i);
+        }
+
     }
 
     public static String getHardwareId(Context context) {
@@ -291,8 +302,8 @@ public class MainActivity extends AppCompatActivity {
                                 //new InsertAndVerifyDataTask().execute();
                                 //new VerifyDataTask().execute();
 
-                                //scheduleAlarm();
-                                dailyAlarm();
+                                scheduleAlarm();
+                                //dailyAlarm();
                             }
 
                             @Override

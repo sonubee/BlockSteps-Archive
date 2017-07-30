@@ -34,6 +34,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import gllc.tech.blocksteps.Sensor.StepService;
+
 /**
  * Created by bhangoo on 7/28/2017.
  */
@@ -55,8 +57,11 @@ public class MyTestService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
 
-        int steps = (int)GetTotalSteps();
+        //int steps = (int)GetTotalSteps();
+
+        int steps = StepService.numSteps;
         sendSteps(steps);
+        StepService.numSteps =0;
     }
 
 
@@ -69,6 +74,7 @@ public class MyTestService extends IntentService {
 
         //Sending Steps
         Log.i("--All", "Send Steps from BG Service, Steps: " + steps);
+        Toast.makeText(getApplicationContext(), "Sending Steps from BG Service, Steps: " + steps, Toast.LENGTH_SHORT).show();
         String hexSteps = Integer.toHexString(steps);
         hexSteps = StringUtils.leftPad(hexSteps,64,"0");
         //Log.i("--All", "Steps in Hex: " + hexSteps);

@@ -20,6 +20,9 @@
         <service
             android:name=".MyTestService"
             android:exported="false" />
+        <service
+            android:name=".Sensor.StepService"
+            android:exported="false"/>
 
         <activity android:name=".MainActivity">
             <intent-filter>
