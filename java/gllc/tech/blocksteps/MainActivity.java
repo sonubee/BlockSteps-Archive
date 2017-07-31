@@ -125,8 +125,14 @@ public class MainActivity extends AppCompatActivity {
             dailyAlarm();
         }
 */
-        todayStepsBig.setText(StepService.numSteps+"");
-        day0Steps.setText(StepService.numSteps+"");
+        //todayStepsBig.setText(StepService.numSteps+"");
+        //day0Steps.setText(StepService.numSteps+"");
+
+        //scheduleAlarm();
+        dailyAlarm();
+
+        todayStepsBig.setText(StepService2.numSteps+"");
+        day0Steps.setText(StepService2.numSteps+"");
 
     }
 
@@ -262,7 +268,7 @@ public class MainActivity extends AppCompatActivity {
                                 //new VerifyDataTask().execute();
 
                                 //scheduleAlarm();
-                                dailyAlarm();
+                                //dailyAlarm();
                             }
 
                             @Override
@@ -395,7 +401,6 @@ public class MainActivity extends AppCompatActivity {
             catch (JSONRPC2SessionException e) {Log.e("--All", "Error Sending Request: " + e.getMessage());}
 
             return response;
-
         }
 
         @Override

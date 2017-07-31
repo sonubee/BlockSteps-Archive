@@ -36,6 +36,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import gllc.tech.blocksteps.Sensor.StepService;
+import gllc.tech.blocksteps.Sensor.StepService2;
 
 /**
  * Created by bhangoo on 7/28/2017.
@@ -61,10 +62,14 @@ public class MyTestService extends IntentService {
     protected void onHandleIntent(Intent intent) {
 
         //int steps = (int)GetTotalSteps();
-
+/*
         int steps = StepService.numSteps;
         sendSteps(steps);
         StepService.numSteps =0;
+        */
+        int steps = StepService2.numSteps;
+        sendSteps(steps);
+        StepService2.numSteps =0;
     }
 
 
