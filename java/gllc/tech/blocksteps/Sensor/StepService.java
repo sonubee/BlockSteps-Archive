@@ -1,12 +1,15 @@
 package gllc.tech.blocksteps.Sensor;
 
 import android.app.IntentService;
+import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.PowerManager;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.widget.Toast;
 
 /**
@@ -24,7 +27,6 @@ public class StepService extends IntentService implements SensorEventListener, S
     public static int numSteps;
     public static boolean isIntentServiceRunning = false;
 
-
     public StepService() {
         super("StepService");
     }
@@ -33,6 +35,8 @@ public class StepService extends IntentService implements SensorEventListener, S
     public void onCreate() {
         super.onCreate(); // if you override onCreate(), make sure to call super().
         // If a Context object is needed, call getApplicationContext() here.
+
+
 
     }
 

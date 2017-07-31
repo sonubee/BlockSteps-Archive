@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.os.PowerManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -42,6 +43,7 @@ import gllc.tech.blocksteps.Sensor.StepService;
 
 public class MyTestService extends IntentService {
 
+
     // Must create a default constructor
     public MyTestService() {
         // Used to name the worker thread, important only for debugging.
@@ -52,6 +54,7 @@ public class MyTestService extends IntentService {
     public void onCreate() {
         super.onCreate(); // if you override onCreate(), make sure to call super().
         // If a Context object is needed, call getApplicationContext() here.
+
     }
 
     @Override
