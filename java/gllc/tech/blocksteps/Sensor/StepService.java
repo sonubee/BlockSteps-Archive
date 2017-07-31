@@ -1,15 +1,12 @@
 package gllc.tech.blocksteps.Sensor;
 
 import android.app.IntentService;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Handler;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -39,7 +36,9 @@ public class StepService extends IntentService implements SensorEventListener, S
         super.onCreate(); // if you override onCreate(), make sure to call super().
         // If a Context object is needed, call getApplicationContext() here.
 
-        }
+
+
+    }
 
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
@@ -51,28 +50,7 @@ public class StepService extends IntentService implements SensorEventListener, S
 
         numSteps = 0;
         sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_FASTEST);
-
-        registerReceiver(mybroadcast, new IntentFilter(Intent.ACTION_SCREEN_ON));
-        registerReceiver(mybroadcast, new IntentFilter(Intent.ACTION_SCREEN_OFF));
     }
-
-    BroadcastReceiver mybroadcast = new BroadcastReceiver() {
-
-        //When Event is published, onReceive method is called
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            // TODO Auto-generated method stub
-            Log.i("[--All", "MyReceiver");
-
-            if(intent.getAction().equals(Intent.ACTION_SCREEN_ON)){
-                Log.i("[--All", "Screen ON");
-            }
-            else if(intent.getAction().equals(Intent.ACTION_SCREEN_OFF)){
-                Log.i("[--All", "Screen OFF");
-            }
-
-        }
-    };
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -85,7 +63,6 @@ public class StepService extends IntentService implements SensorEventListener, S
                     event.timestamp, event.values[0], event.values[1], event.values[2]);
         }
     }
-
 
     @Override
     public void step(long timeNs) {
