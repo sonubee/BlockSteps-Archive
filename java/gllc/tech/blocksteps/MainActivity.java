@@ -126,27 +126,23 @@ public class MainActivity extends AppCompatActivity {
         peopleCount6 = (TextView)findViewById(R.id.peopleCount6);
 
         checkEthereumAddress();
-/*
+
         if (savedInstanceState != null) {
             authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
         }
 
         buildFitnessClient();
-*/
+
         Log.i("--All", "Unique ID: "+uniqueID);
         Log.i("--All", "Device ID: "+getHardwareId(this));
 
 
         if (!StepService.isIntentServiceRunning) {
-            //Toast.makeText(getApplicationContext(), "Starting Service", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Starting Service", Toast.LENGTH_SHORT).show();
             Intent i = new Intent(this, StepService.class);
-            //i.putExtra("foo", "bar");
+            i.putExtra("foo", "bar");
             startService(i);
-            dailyAlarm();
         }
-
-        todayStepsBig.setText(StepService.numSteps+"");
-        day0Steps.setText(StepService.numSteps+"");
 
     }
 
@@ -162,7 +158,6 @@ public class MainActivity extends AppCompatActivity {
             Log.i("--All", "Requesting ethAddress");
             List<Object> params = new ArrayList<>();
             params.add("hellya");
-            Toast.makeText(getApplicationContext(),"One Moment",Toast.LENGTH_SHORT).show();
             new ContactBlockchain().execute("personal_newAccount",params,99, sharedPref, "NA");
             Toast.makeText(getApplicationContext(),"Getting New Address",Toast.LENGTH_SHORT).show();
         }
@@ -177,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
 
             new ContactBlockchain().execute("personal_unlockAccount",params,99, sharedPref,"personalUnlock");
 
-            Toast.makeText(getApplicationContext(),"Loading Your Data",Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(),"Already Have Address - Unlocking",Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -371,7 +366,7 @@ public class MainActivity extends AppCompatActivity {
 
                     Log.i("--All", "Unlocking Account to send Ether: " + MyApplication.mainEtherAddress);
 
-                    new ContactBlockchain().execute("personal_unlockAccount",params,99, sharedPref,"mainUnlock");
+                    new ContactBlockchain().execute("personal_unlockAccount",params,99, sharedPref,"NA");
                 }
 
                 if (method.equals("personal_unlockAccount") && extra.equals("mainUnlock")) {
@@ -393,11 +388,16 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 if (method.equals("personal_unlockAccount") && extra.equals("personalUnlock")) {
-                    loadData();
+                    for (int i=0; i>=-6; i--) {
+                        //getSteps(i);
+                        makeEthCall(i,"getSteps", MyApplication.recallMySteps);
+                        makeEthCall(i,"getPeople", MyApplication.countAllPeopleDate);
+                        //makeEthCall(i, "getEveryoneSteps", MyApplication.everyoneStepsDate);
+                    }
                 }
 
-                if (method.equals("eth_sendTransaction") && extra.equals("mainUnlock")) {
-                    loadData();
+                if (method.equals("eth_sendTransaction") && extra.equals("sentSteps")) {
+                    Log.i("--All", "Successfully Sent Steps");
                 }
 
                 if (method.equals("eth_call") && extra.equals("getSteps")) {
@@ -411,8 +411,8 @@ public class MainActivity extends AppCompatActivity {
                     String formattedDate = format.format(calendar.getTime());
 
                     if (day == 0) {
-                        //todayStepsBig.setText(i+"");
-                        //day0Steps.setText(i+"");
+                        todayStepsBig.setText(i+"");
+                        day0Steps.setText(i+"");
                         day0Title.setText(formattedDate);
                     }
                     if (day == -1) {
@@ -485,15 +485,6 @@ public class MainActivity extends AppCompatActivity {
             }
             else
                 Log.e("--All", "Error in PostExecute: " + response.getError().getMessage());
-        }
-    }
-
-    public void loadData() {
-        for (int i=0; i>=-6; i--) {
-            //getSteps(i);
-            makeEthCall(i,"getSteps", MyApplication.recallMySteps);
-            makeEthCall(i,"getPeople", MyApplication.countAllPeopleDate);
-            //makeEthCall(i, "getEveryoneSteps", MyApplication.everyoneStepsDate);
         }
     }
 
