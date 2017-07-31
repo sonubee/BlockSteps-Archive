@@ -2,14 +2,18 @@ package gllc.tech.blocksteps;
 
 
 import android.app.AlarmManager;
+import android.app.KeyguardManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -62,6 +66,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import gllc.tech.blocksteps.Sensor.StepService;
+import gllc.tech.blocksteps.Sensor.StepService2;
 
 import static java.text.DateFormat.getDateInstance;
 import static java.text.DateFormat.getTimeInstance;
@@ -74,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
     public static GoogleApiClient mClient = null;
     ArrayList<Integer> peopleCount = new ArrayList<>();
 
+    BroadcastReceiver mReceiver;
+
     SharedPreferences sharedPref;
 
     TextView todayStepsBig;
@@ -84,6 +91,8 @@ public class MainActivity extends AppCompatActivity {
 
     String uniqueID = UUID.randomUUID().toString();
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,6 +100,49 @@ public class MainActivity extends AppCompatActivity {
 
         sharedPref = getPreferences(Context.MODE_PRIVATE);
 
+        assignUI();
+        checkEthereumAddress();
+
+
+/*
+        if (savedInstanceState != null) {
+            authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
+        }
+
+        buildFitnessClient();
+*/
+        Log.i("--All", "Unique ID: "+uniqueID);
+        Log.i("--All", "Device ID: "+getHardwareId(this));
+
+        Intent i = new Intent(this, StepService2.class);
+        startService(i);
+/*
+        if (!StepService.isIntentServiceRunning) {
+            //Toast.makeText(getApplicationContext(), "Starting Service", Toast.LENGTH_SHORT).show();
+            Intent i = new Intent(this, StepService.class);
+            //i.putExtra("foo", "bar");
+            startService(i);
+            dailyAlarm();
+        }
+*/
+        todayStepsBig.setText(StepService.numSteps+"");
+        day0Steps.setText(StepService.numSteps+"");
+
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.i("--All", "Main Activity - onPause");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.i("--All", "Main Activity - onStop");
+    }
+
+    public void assignUI() {
         todayStepsBig = (TextView)findViewById(R.id.todayStepsLarge);
 
         avgPeopleSteps0 = (TextView)findViewById(R.id.avgPeopleSteps0);
@@ -124,30 +176,6 @@ public class MainActivity extends AppCompatActivity {
         peopleCount4 = (TextView)findViewById(R.id.peopleCount4);
         peopleCount5 = (TextView)findViewById(R.id.peopleCount5);
         peopleCount6 = (TextView)findViewById(R.id.peopleCount6);
-
-        checkEthereumAddress();
-/*
-        if (savedInstanceState != null) {
-            authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
-        }
-
-        buildFitnessClient();
-*/
-        Log.i("--All", "Unique ID: "+uniqueID);
-        Log.i("--All", "Device ID: "+getHardwareId(this));
-
-
-        if (!StepService.isIntentServiceRunning) {
-            //Toast.makeText(getApplicationContext(), "Starting Service", Toast.LENGTH_SHORT).show();
-            Intent i = new Intent(this, StepService.class);
-            //i.putExtra("foo", "bar");
-            startService(i);
-            dailyAlarm();
-        }
-
-        todayStepsBig.setText(StepService.numSteps+"");
-        day0Steps.setText(StepService.numSteps+"");
-
     }
 
     public static String getHardwareId(Context context) {
@@ -260,6 +288,29 @@ public class MainActivity extends AppCompatActivity {
                 .build();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Register for the particular broadcast based on ACTION string
+        IntentFilter filter = new IntentFilter(StepService.ACTION);
+        LocalBroadcastManager.getInstance(this).registerReceiver(testReceiver, filter);
+        // or `registerReceiver(testReceiver, filter)` for a normal broadcast
+    }
+
+    // Define the callback for what to do when data is received
+    private BroadcastReceiver testReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int resultCode = intent.getIntExtra("resultCode", RESULT_CANCELED);
+            if (resultCode == RESULT_OK) {
+                String resultValue = intent.getStringExtra("resultValue");
+                //Toast.makeText(MainActivity.this, "From Activity: " + resultValue, Toast.LENGTH_SHORT).show();
+                todayStepsBig.setText(resultValue);
+                day0Steps.setText(resultValue);
+            }
+        }
+    };
+
     public void scheduleAlarm() {
         // Construct an intent that will execute the AlarmReceiver
         Intent intent = new Intent(getApplicationContext(), MyAlarmReceiver.class);
@@ -327,7 +378,7 @@ public class MainActivity extends AppCompatActivity {
                 day = (Integer)objects[5];
             }
 
-            Log.i("--All", "Method: " + method + " - Extra: " + extra);
+            //Log.i("--All", "Method: " + method + " - Extra: " + extra);
 
             JSONRPC2Request request = null;
             JSONRPC2Response response = null;
@@ -352,7 +403,7 @@ public class MainActivity extends AppCompatActivity {
 
             // Print response result / error
             if (response.indicatesSuccess()) {
-                Log.i("--All", "*******Successful Server Response: " + response.getResult() +"*******");
+                //Log.i("--All", "*******Successful Server Response: " + response.getResult() +"*******");
 
                 //Storing new address in SharedPreferences
                 if (method.equals("personal_newAccount")) {

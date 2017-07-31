@@ -26,6 +26,10 @@
             android:name=".Sensor.StepService"
             android:exported="false"/>
 
+        <service
+            android:name=".Sensor.StepService2"
+            android:exported="false"/>
+
         <activity android:name=".MainActivity"
             android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
