@@ -3,8 +3,10 @@ package gllc.tech.blocksteps;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -83,6 +85,10 @@ public class MainActivity extends AppCompatActivity {
     TextView avgPeopleSteps0, avgPeopleSteps1 , avgPeopleSteps2, avgPeopleSteps3, avgPeopleSteps4, avgPeopleSteps5, avgPeopleSteps6;
 
     String uniqueID = UUID.randomUUID().toString();
+
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
