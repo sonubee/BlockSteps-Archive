@@ -62,7 +62,7 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "Service Starting", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "Service Starting", Toast.LENGTH_SHORT).show();
         Log.i("--All", "onStartCommand");
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
@@ -160,7 +160,7 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
     @Override
     public void step(long timeNs) {
         numSteps++;
-        Toast.makeText(getApplicationContext(), "Step: " + numSteps, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(getApplicationContext(), "Step: " + numSteps, Toast.LENGTH_SHORT).show();
         //TvSteps.setText(TEXT_NUM_STEPS + numSteps);
 
         Intent in = new Intent(ACTION);

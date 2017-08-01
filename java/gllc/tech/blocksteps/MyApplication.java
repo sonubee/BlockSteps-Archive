@@ -2,6 +2,8 @@ package gllc.tech.blocksteps;
 
 import android.app.Application;
 
+import static gllc.tech.blocksteps.MainActivity.getHardwareId;
+
 /**
  * Created by bhangoo on 7/27/2017.
  */
