@@ -10,7 +10,7 @@ import static gllc.tech.blocksteps.MainActivity.getHardwareId;
 
 public class MyApplication extends Application {
 
-    public static final String contractAddress = "0xe919320e97e6d6a5874dbbae7a5e33cfd0c9fb09";
+    public static final String contractAddress = "0x4cbd302d9c65697c82f00a702fb4cbc99d227657";
     public static final String mainEtherAddress = "0x4d5bcceba61400e52809a9e29eaccce328b4b43f";
 
     public static final String recallMySteps = "0x8fd2f1cd";

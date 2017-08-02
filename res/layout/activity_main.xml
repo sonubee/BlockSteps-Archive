@@ -32,66 +32,65 @@
     <LinearLayout
         android:layout_marginTop="40dp"
         android:layout_width="match_parent"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:layout_height="wrap_content">
 
         <LinearLayout
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:layout_width="wrap_content"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
-                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Date"/>
             <TextView
+                android:layout_weight="1"
                 android:textStyle="bold"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Steps"/>
             <TextView
-                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="People"/>
             <TextView
+
                 android:textStyle="bold"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Avg"/>
+                android:text="Avg/Person"/>
 
         </LinearLayout>
 
         <LinearLayout
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:layout_width="wrap_content"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
+                android:layout_weight="1"
                 android:id="@+id/weekDayTitle0"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Today"/>
             <TextView
+                android:layout_weight="1"
                 android:textStyle="bold"
                 android:id="@+id/weekSteps0"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Steps"/>
             <TextView
-                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="#"
                 android:id="@+id/peopleCount0"/>
             <TextView
+                android:layout_weight="1"
                 android:textStyle="bold"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="#"
@@ -100,31 +99,34 @@
 
         <LinearLayout
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
+                android:layout_weight="1"
                 android:id="@+id/weekDayTitle1"
-                android:layout_gravity="center_horizontal"
+
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Today"/>
             <TextView
+                android:layout_weight="1"
                 android:textStyle="bold"
                 android:id="@+id/weekSteps1"
-                android:layout_gravity="center_horizontal"
+
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Steps"/>
             <TextView
-                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
+
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="#"
                 android:id="@+id/peopleCount1"/>
             <TextView
+                android:layout_weight="1"
                 android:textStyle="bold"
-                android:layout_gravity="center_horizontal"
+
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="#"
@@ -133,31 +135,31 @@
 
         <LinearLayout
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:layout_width="wrap_content"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
+                android:layout_weight="1"
                 android:id="@+id/weekDayTitle2"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Today"/>
             <TextView
+                android:layout_weight="1"
                 android:textStyle="bold"
                 android:id="@+id/weekSteps2"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Steps"/>
             <TextView
-                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="#"
                 android:id="@+id/peopleCount2"/>
             <TextView
+                android:layout_weight="1"
                 android:textStyle="bold"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="#"
@@ -166,31 +168,31 @@
 
         <LinearLayout
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:layout_width="wrap_content"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
+                android:layout_weight="1"
                 android:id="@+id/weekDayTitle3"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Today"/>
             <TextView
+                android:layout_weight="1"
                 android:textStyle="bold"
                 android:id="@+id/weekSteps3"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Steps"/>
             <TextView
-                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="#"
                 android:id="@+id/peopleCount3"/>
             <TextView
+                android:layout_weight="1"
                 android:textStyle="bold"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="#"
@@ -199,31 +201,31 @@
 
         <LinearLayout
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:layout_width="wrap_content"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
+                android:layout_weight="1"
                 android:id="@+id/weekDayTitle4"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Today"/>
             <TextView
+                android:layout_weight="1"
                 android:textStyle="bold"
                 android:id="@+id/weekSteps4"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Steps"/>
             <TextView
-                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="#"
                 android:id="@+id/peopleCount4"/>
             <TextView
+                android:layout_weight="1"
                 android:textStyle="bold"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="#"
@@ -232,31 +234,31 @@
 
         <LinearLayout
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:layout_width="wrap_content"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
+                android:layout_weight="1"
                 android:id="@+id/weekDayTitle5"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Today"/>
             <TextView
+                android:layout_weight="1"
                 android:textStyle="bold"
                 android:id="@+id/weekSteps5"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Steps"/>
             <TextView
-                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="#"
                 android:id="@+id/peopleCount5"/>
             <TextView
+                android:layout_weight="1"
                 android:textStyle="bold"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="#"
@@ -265,31 +267,31 @@
 
         <LinearLayout
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:layout_width="wrap_content"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
+                android:layout_weight="1"
                 android:id="@+id/weekDayTitle6"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Today"/>
             <TextView
+                android:layout_weight="1"
                 android:textStyle="bold"
                 android:id="@+id/weekSteps6"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Steps"/>
             <TextView
-                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="#"
                 android:id="@+id/peopleCount6"/>
             <TextView
+                android:layout_weight="1"
                 android:textStyle="bold"
-                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="#"
@@ -297,12 +299,5 @@
         </LinearLayout>
 
     </LinearLayout>
-    <Button
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:text="Force Crash!"
-        android:onClick="forceCrash"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true" />
 
 </LinearLayout>
