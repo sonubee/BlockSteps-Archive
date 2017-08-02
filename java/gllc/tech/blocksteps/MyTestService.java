@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -44,6 +45,9 @@ import gllc.tech.blocksteps.Sensor.StepService2;
 
 public class MyTestService extends IntentService {
 
+    SharedPreferences sharedPref;
+    SharedPreferences.Editor editor;
+
 
     // Must create a default constructor
     public MyTestService() {
@@ -55,7 +59,8 @@ public class MyTestService extends IntentService {
     public void onCreate() {
         super.onCreate(); // if you override onCreate(), make sure to call super().
         // If a Context object is needed, call getApplicationContext() here.
-
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        editor = sharedPref.edit();
     }
 
     @Override
@@ -67,9 +72,11 @@ public class MyTestService extends IntentService {
         sendSteps(steps);
         StepService.numSteps =0;
         */
-        int steps = StepService2.numSteps;
+
+        int steps = sharedPref.getInt("steps",0);
         sendSteps(steps);
         StepService2.numSteps =0;
+        editor.putInt("steps", 0).commit();
     }
 
 
@@ -82,7 +89,7 @@ public class MyTestService extends IntentService {
 
         //Sending Steps
         Log.i("--All", "Send Steps from BG Service, Steps: " + steps);
-        Toast.makeText(getApplicationContext(), "Sending Steps from BG Service, Steps: " + steps, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(getApplicationContext(), "Sending Steps from BG Service, Steps: " + steps, Toast.LENGTH_SHORT).show();
         String hexSteps = Integer.toHexString(steps);
         hexSteps = StringUtils.leftPad(hexSteps,64,"0");
         //Log.i("--All", "Steps in Hex: " + hexSteps);

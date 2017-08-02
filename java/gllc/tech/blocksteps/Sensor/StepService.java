@@ -11,6 +11,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -44,6 +45,7 @@ public class StepService extends IntentService implements SensorEventListener, S
         super.onCreate(); // if you override onCreate(), make sure to call super().
         // If a Context object is needed, call getApplicationContext() here.
         Log.i("--All", "onCreate");
+
     }
 
     public class PhoneUnlockedReceiver extends BroadcastReceiver {

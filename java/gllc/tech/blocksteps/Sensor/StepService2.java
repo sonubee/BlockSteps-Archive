@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -16,6 +17,7 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -39,13 +41,24 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
     BroadcastReceiver receiver;
     private Looper mServiceLooper;
     private ServiceHandler mServiceHandler;
+    SharedPreferences sharedPref;
+    SharedPreferences.Editor editor;
 
     @Override
     public void onCreate() {
         super.onCreate(); // if you override onCreate(), make sure to call super().
         // If a Context object is needed, call getApplicationContext() here.
         Log.i("--All", "onCreate");
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        editor = sharedPref.edit();
+
+        /*
+        editor.putInt("steps",0);
+        editor.commit();
         numSteps = 0;
+        */
+
+        numSteps = sharedPref.getInt("steps",0);
 
         // Start up the thread running the service.  Note that we create a
         // separate thread because the service normally runs in the process's
@@ -159,9 +172,9 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
 
     @Override
     public void step(long timeNs) {
+        numSteps = sharedPref.getInt("steps",0);
         numSteps++;
-        //Toast.makeText(getApplicationContext(), "Step: " + numSteps, Toast.LENGTH_SHORT).show();
-        //TvSteps.setText(TEXT_NUM_STEPS + numSteps);
+        editor.putInt("steps",numSteps).commit();
 
         Intent in = new Intent(ACTION);
         // Put extras into the intent as usual

@@ -4,6 +4,7 @@ package gllc.tech.blocksteps;
 import android.app.AlarmManager;
 import android.app.KeyguardManager;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -23,6 +24,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -67,6 +69,7 @@ import java.util.concurrent.TimeUnit;
 
 import gllc.tech.blocksteps.Sensor.StepService;
 import gllc.tech.blocksteps.Sensor.StepService2;
+import io.fabric.sdk.android.Fabric;
 
 import static java.text.DateFormat.getDateInstance;
 import static java.text.DateFormat.getTimeInstance;
@@ -78,8 +81,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean authInProgress = false;
     public static GoogleApiClient mClient = null;
     ArrayList<Integer> peopleCount = new ArrayList<>();
-
-    BroadcastReceiver mReceiver;
+    String uniqueID;
+    ProgressDialog dialog;
 
     SharedPreferences sharedPref;
 
@@ -89,19 +92,38 @@ public class MainActivity extends AppCompatActivity {
     TextView peopleCount0, peopleCount1, peopleCount2, peopleCount3, peopleCount4, peopleCount5, peopleCount6;
     TextView avgPeopleSteps0, avgPeopleSteps1 , avgPeopleSteps2, avgPeopleSteps3, avgPeopleSteps4, avgPeopleSteps5, avgPeopleSteps6;
 
-    String uniqueID = UUID.randomUUID().toString();
-
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Fabric.with(this, new Crashlytics());
+        uniqueID = getHardwareId(this);
+
+        View view = null;
+        //forceCrash(view);
+
+        dialog = new ProgressDialog(MainActivity.this);
+        dialog.setMessage("Loading");
+        dialog.show();
+
         sharedPref = getPreferences(Context.MODE_PRIVATE);
+
+        //sharedPref.edit().clear().commit();
 
         assignUI();
         checkEthereumAddress();
+
+        Intent i = new Intent(this, StepService2.class);
+        startService(i);
+        //scheduleAlarm();
+        dailyAlarm();
+
+        //todayStepsBig.setText(sharedPref.getInt("steps",0)+"");
+        //day0Steps.setText(sharedPref.getInt("steps",0)+"");
+
+        todayStepsBig.setText(StepService2.numSteps+"");
+        day0Steps.setText(StepService2.numSteps+"");
 
 
 /*
@@ -111,11 +133,9 @@ public class MainActivity extends AppCompatActivity {
 
         buildFitnessClient();
 */
-        Log.i("--All", "Unique ID: "+uniqueID);
-        Log.i("--All", "Device ID: "+getHardwareId(this));
 
-        Intent i = new Intent(this, StepService2.class);
-        startService(i);
+
+
 /*
         if (!StepService.isIntentServiceRunning) {
             //Toast.makeText(getApplicationContext(), "Starting Service", Toast.LENGTH_SHORT).show();
@@ -128,65 +148,12 @@ public class MainActivity extends AppCompatActivity {
         //todayStepsBig.setText(StepService.numSteps+"");
         //day0Steps.setText(StepService.numSteps+"");
 
-        //scheduleAlarm();
-        dailyAlarm();
-
-        todayStepsBig.setText(StepService2.numSteps+"");
-        day0Steps.setText(StepService2.numSteps+"");
-
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.i("--All", "Main Activity - onPause");
+    public void forceCrash(View view) {
+        throw new RuntimeException("This is a crash");
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.i("--All", "Main Activity - onStop");
-    }
-
-    public void assignUI() {
-        todayStepsBig = (TextView)findViewById(R.id.todayStepsLarge);
-
-        avgPeopleSteps0 = (TextView)findViewById(R.id.avgPeopleSteps0);
-        avgPeopleSteps1 = (TextView)findViewById(R.id.avgPeopleSteps1);
-        avgPeopleSteps2 = (TextView)findViewById(R.id.avgPeopleSteps2);
-        avgPeopleSteps3 = (TextView)findViewById(R.id.avgPeopleSteps3);
-        avgPeopleSteps4 = (TextView)findViewById(R.id.avgPeopleSteps4);
-        avgPeopleSteps5 = (TextView)findViewById(R.id.avgPeopleSteps5);
-        avgPeopleSteps6 = (TextView)findViewById(R.id.avgPeopleSteps6);
-
-        day0Steps = (TextView)findViewById(R.id.weekSteps0);
-        day1Steps = (TextView)findViewById(R.id.weekSteps1);
-        day2Steps = (TextView)findViewById(R.id.weekSteps2);
-        day3Steps = (TextView)findViewById(R.id.weekSteps3);
-        day4Steps = (TextView)findViewById(R.id.weekSteps4);
-        day5Steps = (TextView)findViewById(R.id.weekSteps5);
-        day6Steps = (TextView)findViewById(R.id.weekSteps6);
-
-        day0Title = (TextView)findViewById(R.id.weekDayTitle0);
-        day1Title = (TextView)findViewById(R.id.weekDayTitle1);
-        day2Title = (TextView)findViewById(R.id.weekDayTitle2);
-        day3Title = (TextView)findViewById(R.id.weekDayTitle3);
-        day4Title = (TextView)findViewById(R.id.weekDayTitle4);
-        day5Title = (TextView)findViewById(R.id.weekDayTitle5);
-        day6Title = (TextView)findViewById(R.id.weekDayTitle6);
-
-        peopleCount0 = (TextView)findViewById(R.id.peopleCount0);
-        peopleCount1 = (TextView)findViewById(R.id.peopleCount1);
-        peopleCount2 = (TextView)findViewById(R.id.peopleCount2);
-        peopleCount3 = (TextView)findViewById(R.id.peopleCount3);
-        peopleCount4 = (TextView)findViewById(R.id.peopleCount4);
-        peopleCount5 = (TextView)findViewById(R.id.peopleCount5);
-        peopleCount6 = (TextView)findViewById(R.id.peopleCount6);
-    }
-
-    public static String getHardwareId(Context context) {
-        return Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
-    }
 
     private void checkEthereumAddress() {
 
@@ -195,10 +162,10 @@ public class MainActivity extends AppCompatActivity {
         if (MyApplication.ethAddress.equals("none")) {
             Log.i("--All", "Requesting ethAddress");
             List<Object> params = new ArrayList<>();
-            params.add("hellya");
-            Toast.makeText(getApplicationContext(),"One Moment",Toast.LENGTH_SHORT).show();
+            params.add(uniqueID);
+            //Toast.makeText(getApplicationContext(),"One Moment",Toast.LENGTH_SHORT).show();
             new ContactBlockchain().execute("personal_newAccount",params,99, sharedPref, "NA");
-            Toast.makeText(getApplicationContext(),"Getting New Address",Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getApplicationContext(),"Getting New Address",Toast.LENGTH_SHORT).show();
         }
 
         else {
@@ -206,12 +173,12 @@ public class MainActivity extends AppCompatActivity {
 
             List<Object> params = new ArrayList<>();
             params.add(MyApplication.ethAddress);
-            params.add("hellya");
+            params.add(uniqueID);
             params.add(0);
 
             new ContactBlockchain().execute("personal_unlockAccount",params,99, sharedPref,"personalUnlock");
 
-            Toast.makeText(getApplicationContext(),"Loading Your Data",Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getApplicationContext(),"Loading Your Data",Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -301,6 +268,8 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter filter = new IntentFilter(StepService.ACTION);
         LocalBroadcastManager.getInstance(this).registerReceiver(testReceiver, filter);
         // or `registerReceiver(testReceiver, filter)` for a normal broadcast
+        todayStepsBig.setText(StepService2.numSteps+"");
+        day0Steps.setText(StepService2.numSteps+"");
     }
 
     // Define the callback for what to do when data is received
@@ -333,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void dailyAlarm() {
-        Log.i("--All", "Daily Alarm");
+        Log.i("--All", "Daily Alarm Set");
         // Construct an intent that will execute the AlarmReceiver
         Intent intent = new Intent(getApplicationContext(), MyAlarmReceiver.class);
         // Create a PendingIntent to be triggered when the alarm goes off
@@ -443,7 +412,7 @@ public class MainActivity extends AppCompatActivity {
 
                     params3.add(params);
 
-                    Log.i("--All", params.toString());
+                    //Log.i("--All", params.toString());
 
                     new ContactBlockchain().execute("eth_sendTransaction",params3,99, sharedPref,"mainUnlock");
                 }
@@ -536,6 +505,8 @@ public class MainActivity extends AppCompatActivity {
                     if (day == -4 ) avgPeopleSteps4.setText(avgSteps+"");
                     if (day == -5 ) avgPeopleSteps5.setText(avgSteps+"");
                     if (day == -6 ) avgPeopleSteps6.setText(avgSteps+"");
+
+                    dialog.dismiss();
                 }
 
             }
@@ -545,6 +516,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void loadData() {
+        Log.i("--All", "Loading All Data from Blockchain");
         for (int i=0; i>=-6; i--) {
             //getSteps(i);
             makeEthCall(i,"getSteps", MyApplication.recallMySteps);
@@ -553,4 +525,43 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void assignUI() {
+        todayStepsBig = (TextView)findViewById(R.id.todayStepsLarge);
+
+        avgPeopleSteps0 = (TextView)findViewById(R.id.avgPeopleSteps0);
+        avgPeopleSteps1 = (TextView)findViewById(R.id.avgPeopleSteps1);
+        avgPeopleSteps2 = (TextView)findViewById(R.id.avgPeopleSteps2);
+        avgPeopleSteps3 = (TextView)findViewById(R.id.avgPeopleSteps3);
+        avgPeopleSteps4 = (TextView)findViewById(R.id.avgPeopleSteps4);
+        avgPeopleSteps5 = (TextView)findViewById(R.id.avgPeopleSteps5);
+        avgPeopleSteps6 = (TextView)findViewById(R.id.avgPeopleSteps6);
+
+        day0Steps = (TextView)findViewById(R.id.weekSteps0);
+        day1Steps = (TextView)findViewById(R.id.weekSteps1);
+        day2Steps = (TextView)findViewById(R.id.weekSteps2);
+        day3Steps = (TextView)findViewById(R.id.weekSteps3);
+        day4Steps = (TextView)findViewById(R.id.weekSteps4);
+        day5Steps = (TextView)findViewById(R.id.weekSteps5);
+        day6Steps = (TextView)findViewById(R.id.weekSteps6);
+
+        day0Title = (TextView)findViewById(R.id.weekDayTitle0);
+        day1Title = (TextView)findViewById(R.id.weekDayTitle1);
+        day2Title = (TextView)findViewById(R.id.weekDayTitle2);
+        day3Title = (TextView)findViewById(R.id.weekDayTitle3);
+        day4Title = (TextView)findViewById(R.id.weekDayTitle4);
+        day5Title = (TextView)findViewById(R.id.weekDayTitle5);
+        day6Title = (TextView)findViewById(R.id.weekDayTitle6);
+
+        peopleCount0 = (TextView)findViewById(R.id.peopleCount0);
+        peopleCount1 = (TextView)findViewById(R.id.peopleCount1);
+        peopleCount2 = (TextView)findViewById(R.id.peopleCount2);
+        peopleCount3 = (TextView)findViewById(R.id.peopleCount3);
+        peopleCount4 = (TextView)findViewById(R.id.peopleCount4);
+        peopleCount5 = (TextView)findViewById(R.id.peopleCount5);
+        peopleCount6 = (TextView)findViewById(R.id.peopleCount6);
+    }
+
+    public static String getHardwareId(Context context) {
+        return Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+    }
 }
