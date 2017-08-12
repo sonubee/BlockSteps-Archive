@@ -44,7 +44,7 @@ public class StepService extends IntentService implements SensorEventListener, S
     public void onCreate() {
         super.onCreate(); // if you override onCreate(), make sure to call super().
         // If a Context object is needed, call getApplicationContext() here.
-        Log.i("--All", "onCreate");
+        Log.i("--All", "onCreate StepService");
 
     }
 

@@ -20,6 +20,7 @@ import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.content.WakefulBroadcastReceiver;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -48,9 +49,11 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
     public void onCreate() {
         super.onCreate(); // if you override onCreate(), make sure to call super().
         // If a Context object is needed, call getApplicationContext() here.
-        Log.i("--All", "onCreate");
-        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        Log.i("--All", "onCreate StepService2");
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         editor = sharedPref.edit();
+
+        Log.i("--All", "StepService2 onCreate = " + sharedPref.getInt("steps",0));
 
         /*
         editor.putInt("steps",0);
@@ -84,6 +87,16 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
         mServiceHandler.sendMessage(msg);
 
         registerListener();
+
+        //WakefulBroadcastReceiver.completeWakefulIntent(intent);
+
+        //to set main ui with steps
+        Intent in = new Intent(ACTION);
+        // Put extras into the intent as usual
+        in.putExtra("resultCode", Activity.RESULT_OK);
+        in.putExtra("resultValue", ""+numSteps);
+        // Fire the broadcast with intent packaged
+        LocalBroadcastManager.getInstance(this).sendBroadcast(in);
 
 
         // If we get killed, after returning from here, restart

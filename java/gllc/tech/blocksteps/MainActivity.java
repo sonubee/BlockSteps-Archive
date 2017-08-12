@@ -12,6 +12,7 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
@@ -108,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
         dialog.setMessage("Loading");
         dialog.show();
 
-        sharedPref = getPreferences(Context.MODE_PRIVATE);
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
         //sharedPref.edit().clear().commit();
 
@@ -120,11 +121,15 @@ public class MainActivity extends AppCompatActivity {
         //scheduleAlarm();
         dailyAlarm();
 
-        //todayStepsBig.setText(sharedPref.getInt("steps",0)+"");
-        //day0Steps.setText(sharedPref.getInt("steps",0)+"");
+/*
+        int steps = sharedPref.getInt("steps",0);
+        Log.i("--All", "Main Activity Steps = " + steps);
 
-        todayStepsBig.setText(StepService2.numSteps+"");
-        day0Steps.setText(StepService2.numSteps+"");
+        todayStepsBig.setText(Integer.toString(steps));
+        day0Steps.setText(Integer.toString(steps));
+*/
+        //todayStepsBig.setText(StepService2.numSteps+"");
+        //day0Steps.setText(StepService2.numSteps+"");
 
 
 /*
@@ -266,7 +271,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         // Register for the particular broadcast based on ACTION string
-        IntentFilter filter = new IntentFilter(StepService.ACTION);
+        IntentFilter filter = new IntentFilter(StepService2.ACTION);
         LocalBroadcastManager.getInstance(this).registerReceiver(testReceiver, filter);
         // or `registerReceiver(testReceiver, filter)` for a normal broadcast
         todayStepsBig.setText(StepService2.numSteps+"");
