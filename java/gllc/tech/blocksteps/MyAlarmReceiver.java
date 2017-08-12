@@ -17,7 +17,7 @@ public class MyAlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.i("--All", "Alarm Triggered");
-        Intent i = new Intent(context, MyTestService.class);
+        Intent i = new Intent(context, SendStepsService.class);
         i.putExtra("foo", "bar");
         context.startService(i);
     }

@@ -38,7 +38,7 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
     private static final String TEXT_NUM_STEPS = "Number of Steps: ";
     public static int numSteps;
     public static boolean isIntentServiceRunning = false;
-    public static final String ACTION = "com.codepath.example.servicesdemo.MyTestService";
+    public static final String ACTION = "com.codepath.example.servicesdemo.SendStepsService";
     BroadcastReceiver receiver;
     private Looper mServiceLooper;
     private ServiceHandler mServiceHandler;

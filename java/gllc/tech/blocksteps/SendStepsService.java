@@ -43,14 +43,14 @@ import gllc.tech.blocksteps.Sensor.StepService2;
  * Created by bhangoo on 7/28/2017.
  */
 
-public class MyTestService extends IntentService {
+public class SendStepsService extends IntentService {
 
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
 
 
     // Must create a default constructor
-    public MyTestService() {
+    public SendStepsService() {
         // Used to name the worker thread, important only for debugging.
         super("test-service");
     }
