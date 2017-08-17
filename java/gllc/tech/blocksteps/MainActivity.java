@@ -49,6 +49,7 @@ import com.google.android.gms.fitness.request.SensorRequest;
 import com.google.android.gms.fitness.result.DailyTotalResult;
 import com.google.android.gms.fitness.result.DataReadResult;
 import com.google.android.gms.fitness.result.DataSourcesResult;
+import com.google.firebase.FirebaseApp;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2Session;
@@ -87,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
     ProgressDialog dialog;
 
     SharedPreferences sharedPref;
+    SharedPreferences.Editor editor;
 
     TextView todayStepsBig;
     TextView day0Steps, day1Steps,day2Steps,day3Steps, day4Steps, day5Steps, day6Steps;
@@ -99,8 +101,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        FirebaseApp.initializeApp(this);
         Fabric.with(this, new Crashlytics());
         uniqueID = getHardwareId(this);
+
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        editor = sharedPref.edit();
+        editor.putString("uniqueId",uniqueID).commit();
 
         View view = null;
         //forceCrash(view);
@@ -109,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
         dialog.setMessage("Loading");
         dialog.show();
 
-        sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+
 
         //sharedPref.edit().clear().commit();
 
@@ -118,8 +125,10 @@ public class MainActivity extends AppCompatActivity {
 
         Intent i = new Intent(this, StepService2.class);
         startService(i);
-        //scheduleAlarm();
-        dailyAlarm();
+        scheduleAlarm();
+        //dailyAlarm();
+
+
 
 /*
         int steps = sharedPref.getInt("steps",0);
@@ -176,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
 
         else {
             Log.i("--All", "Already Have ethAddress");
+            MyApplication.ethAddress = sharedPref.getString("ethAddress","none");
 
             List<Object> params = new ArrayList<>();
             params.add(MyApplication.ethAddress);
@@ -303,8 +313,10 @@ public class MainActivity extends AppCompatActivity {
         AlarmManager alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
         // First parameter is the type: ELAPSED_REALTIME, ELAPSED_REALTIME_WAKEUP, RTC_WAKEUP
         // Interval can be INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR, INTERVAL_DAY
-        //alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, AlarmManager.INTERVAL_FIFTEEN_MINUTES, pIntent);
-        alarm.setRepeating(AlarmManager.RTC, firstMillis, 1000 * 60, pIntent);
+        //Log.i("--All", "Interval Alarm Set");
+        //alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, AlarmManager.INTERVAL_HOUR, pIntent);
+        Log.i("--All", "Minute and Half Alarm Set");
+        alarm.setRepeating(AlarmManager.RTC, firstMillis, 1500 * 60, pIntent);
     }
 
     public void dailyAlarm() {
@@ -382,142 +394,148 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(JSONRPC2Response response) {
 
             // Print response result / error
-            if (response.indicatesSuccess()) {
-                //Log.i("--All", "*******Successful Server Response: " + response.getResult() +"*******");
+            try {response.indicatesSuccess();
+                if (response.indicatesSuccess()) {
+                    //Log.i("--All", "*******Successful Server Response: " + response.getResult() +"*******");
 
-                //Storing new address in SharedPreferences
-                if (method.equals("personal_newAccount")) {
-                    SharedPreferences.Editor editor = sharedPref.edit();
-                    editor.putString("ethAddress",response.getResult().toString());
-                    editor.commit();
-                    MyApplication.ethAddress = response.getResult().toString();
+                    //Storing new address in SharedPreferences
+                    if (method.equals("personal_newAccount")) {
+                        SharedPreferences.Editor editor = sharedPref.edit();
+                        editor.putString("ethAddress",response.getResult().toString());
+                        editor.commit();
+                        MyApplication.ethAddress = response.getResult().toString();
 
-                    Log.i("--All", "Created Address: " + response.getResult().toString());
+                        Log.i("--All", "Created Address: " + response.getResult().toString());
 
-                    //Unlock Main Account to Send Ether to new Address
-                    List<Object> params = new ArrayList<>();
-                    params.add(MyApplication.mainEtherAddress);
-                    params.add("hellya");
-                    params.add(0);
+                        //Unlock Main Account to Send Ether to new Address
+                        List<Object> params = new ArrayList<>();
+                        params.add(MyApplication.mainEtherAddress);
+                        params.add("hellya");
+                        params.add(0);
 
-                    Log.i("--All", "Unlocking Account to send Ether: " + MyApplication.mainEtherAddress);
+                        Log.i("--All", "Unlocking Account to send Ether: " + MyApplication.mainEtherAddress);
 
-                    new ContactBlockchain().execute("personal_unlockAccount",params,99, sharedPref,"mainUnlock");
-                }
-
-                if (method.equals("personal_unlockAccount") && extra.equals("mainUnlock")) {
-                    //Send Ether to new Address
-                    Log.i("--All", "Successfully Unlocked, now Sending Ether");
-
-                    List<Object> params3 = new ArrayList<>();
-
-                    Map params = new HashMap();
-                    params.put("from", MyApplication.mainEtherAddress);
-                    params.put("to",MyApplication.ethAddress);
-                    params.put("value","0xDE0B6B3A7640000");
-
-                    params3.add(params);
-
-                    //Log.i("--All", params.toString());
-
-                    new ContactBlockchain().execute("eth_sendTransaction",params3,99, sharedPref,"mainUnlock");
-                }
-
-                if (method.equals("personal_unlockAccount") && extra.equals("personalUnlock")) {
-                    loadData();
-                }
-
-                if (method.equals("eth_sendTransaction") && extra.equals("mainUnlock")) {
-                    loadData();
-                }
-
-                if (method.equals("eth_call") && extra.equals("getSteps")) {
-
-                    int i = Integer.parseInt(response.getResult().toString().substring(2),16);
-                    //Log.i("--All", "Day: " + day + " - Steps = " + i);
-
-                    Calendar calendar = Calendar.getInstance();
-                    calendar.add(Calendar.DAY_OF_YEAR, day);
-                    SimpleDateFormat format = new SimpleDateFormat("MM/dd");
-                    String formattedDate = format.format(calendar.getTime());
-
-                    if (day == 0) {
-                        //todayStepsBig.setText(i+"");
-                        //day0Steps.setText(i+"");
-                        day0Title.setText(formattedDate);
+                        new ContactBlockchain().execute("personal_unlockAccount",params,99, sharedPref,"mainUnlock");
                     }
-                    if (day == -1) {
-                        day1Steps.setText(i+"");
-                        day1Title.setText(formattedDate);
-                    }
-                    if (day == -2) {
-                        day2Steps.setText(i+"");
-                        day2Title.setText(formattedDate);
-                    }
-                    if (day == -3) {
-                        day3Steps.setText(i+"");
-                        day3Title.setText(formattedDate);
-                    }
-                    if (day == -4) {
-                        day4Steps.setText(i+"");
-                        day4Title.setText(formattedDate);
-                    }
-                    if (day == -5) {
-                        day5Steps.setText(i+"");
-                        day5Title.setText(formattedDate);
-                    }
-                    if (day == -6) {
-                        day6Steps.setText(i+"");
-                        day6Title.setText(formattedDate);
-                    }
-                }
 
-                if (method.equals("eth_call") && extra.equals("getPeople")) {
+                    if (method.equals("personal_unlockAccount") && extra.equals("mainUnlock")) {
+                        //Send Ether to new Address
+                        Log.i("--All", "Successfully Unlocked, now Sending Ether");
 
-                    int i = Integer.parseInt(response.getResult().toString().substring(2),16);
+                        List<Object> params3 = new ArrayList<>();
 
-                    if (day == 0 )  peopleCount0.setText(i+"");
-                    if (day == -1 ) peopleCount1.setText(i+"");
-                    if (day == -2 ) peopleCount2.setText(i+"");
-                    if (day == -3 ) peopleCount3.setText(i+"");
-                    if (day == -4 ) peopleCount4.setText(i+"");
-                    if (day == -5 ) peopleCount5.setText(i+"");
-                    if (day == -6 ) peopleCount6.setText(i+"");
+                        Map params = new HashMap();
+                        params.put("from", MyApplication.mainEtherAddress);
+                        params.put("to",MyApplication.ethAddress);
+                        params.put("value","0xDE0B6B3A7640000");
 
-                    int index = day * -1;
-                    peopleCount.add(index,i);
+                        params3.add(params);
 
-                    if (day == -6){
-                        for (int j=0; j>=-6; j--) {
-                            //getSteps(i);
-                            makeEthCall(j, "getEveryoneSteps", MyApplication.everyoneStepsDate);
+                        //Log.i("--All", params.toString());
+
+                        new ContactBlockchain().execute("eth_sendTransaction",params3,99, sharedPref,"mainUnlock");
+                    }
+
+                    if (method.equals("personal_unlockAccount") && extra.equals("personalUnlock")) {
+                        loadData();
+                    }
+
+                    if (method.equals("eth_sendTransaction") && extra.equals("mainUnlock")) {
+                        loadData();
+                    }
+
+                    if (method.equals("eth_call") && extra.equals("getSteps")) {
+
+                        int i = Integer.parseInt(response.getResult().toString().substring(2),16);
+                        //Log.i("--All", "Day: " + day + " - Steps = " + i);
+
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.add(Calendar.DAY_OF_YEAR, day);
+                        SimpleDateFormat format = new SimpleDateFormat("MM/dd");
+                        String formattedDate = format.format(calendar.getTime());
+
+                        if (day == 0) {
+                            //todayStepsBig.setText(i+"");
+                            //day0Steps.setText(i+"");
+                            day0Title.setText(formattedDate);
+                        }
+                        if (day == -1) {
+                            day1Steps.setText(i+"");
+                            day1Title.setText(formattedDate);
+                        }
+                        if (day == -2) {
+                            day2Steps.setText(i+"");
+                            day2Title.setText(formattedDate);
+                        }
+                        if (day == -3) {
+                            day3Steps.setText(i+"");
+                            day3Title.setText(formattedDate);
+                        }
+                        if (day == -4) {
+                            day4Steps.setText(i+"");
+                            day4Title.setText(formattedDate);
+                        }
+                        if (day == -5) {
+                            day5Steps.setText(i+"");
+                            day5Title.setText(formattedDate);
+                        }
+                        if (day == -6) {
+                            day6Steps.setText(i+"");
+                            day6Title.setText(formattedDate);
                         }
                     }
+
+                    if (method.equals("eth_call") && extra.equals("getPeople")) {
+
+                        int i = Integer.parseInt(response.getResult().toString().substring(2),16);
+
+                        if (day == 0 )  peopleCount0.setText(i+"");
+                        if (day == -1 ) peopleCount1.setText(i+"");
+                        if (day == -2 ) peopleCount2.setText(i+"");
+                        if (day == -3 ) peopleCount3.setText(i+"");
+                        if (day == -4 ) peopleCount4.setText(i+"");
+                        if (day == -5 ) peopleCount5.setText(i+"");
+                        if (day == -6 ) peopleCount6.setText(i+"");
+
+                        int index = day * -1;
+                        peopleCount.add(index,i);
+
+                        if (day == -6){
+                            for (int j=0; j>=-6; j--) {
+                                //getSteps(i);
+                                makeEthCall(j, "getEveryoneSteps", MyApplication.everyoneStepsDate);
+                            }
+                        }
+                    }
+
+                    if (method.equals("eth_call") && extra.equals("getEveryoneSteps")) {
+                        int i = Integer.parseInt(response.getResult().toString().substring(2),16);
+                        int index = day * -1;
+
+                        int avgSteps;
+                        if (peopleCount.get(index) != 0) avgSteps = i / peopleCount.get(index);
+                        else avgSteps = 0;
+
+
+                        if (day == 0 ) avgPeopleSteps0.setText(avgSteps+"");
+                        if (day == -1 ) avgPeopleSteps1.setText(avgSteps+"");
+                        if (day == -2 ) avgPeopleSteps2.setText(avgSteps+"");
+                        if (day == -3 ) avgPeopleSteps3.setText(avgSteps+"");
+                        if (day == -4 ) avgPeopleSteps4.setText(avgSteps+"");
+                        if (day == -5 ) avgPeopleSteps5.setText(avgSteps+"");
+                        if (day == -6 ) avgPeopleSteps6.setText(avgSteps+"");
+
+                        dialog.dismiss();
+                    }
+
                 }
-
-                if (method.equals("eth_call") && extra.equals("getEveryoneSteps")) {
-                    int i = Integer.parseInt(response.getResult().toString().substring(2),16);
-                    int index = day * -1;
-
-                    int avgSteps;
-                    if (peopleCount.get(index) != 0) avgSteps = i / peopleCount.get(index);
-                    else avgSteps = 0;
-
-
-                    if (day == 0 ) avgPeopleSteps0.setText(avgSteps+"");
-                    if (day == -1 ) avgPeopleSteps1.setText(avgSteps+"");
-                    if (day == -2 ) avgPeopleSteps2.setText(avgSteps+"");
-                    if (day == -3 ) avgPeopleSteps3.setText(avgSteps+"");
-                    if (day == -4 ) avgPeopleSteps4.setText(avgSteps+"");
-                    if (day == -5 ) avgPeopleSteps5.setText(avgSteps+"");
-                    if (day == -6 ) avgPeopleSteps6.setText(avgSteps+"");
-
-                    dialog.dismiss();
-                }
-
+                else
+                    Log.e("--All", "Error in PostExecute: " + response.getError().getMessage());
+            } catch (Exception e) {
+                //Toast.makeText(getApplicationContext(), "Exception: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                Crashlytics.logException(e);
             }
-            else
-                Log.e("--All", "Error in PostExecute: " + response.getError().getMessage());
+
         }
     }
 
@@ -570,4 +588,6 @@ public class MainActivity extends AppCompatActivity {
     public static String getHardwareId(Context context) {
         return Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
     }
+
+
 }

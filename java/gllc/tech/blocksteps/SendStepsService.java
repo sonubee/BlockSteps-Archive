@@ -12,12 +12,16 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.fitness.Fitness;
 import com.google.android.gms.fitness.data.DataSet;
 import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Field;
 import com.google.android.gms.fitness.result.DailyTotalResult;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2Session;
@@ -36,6 +40,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import gllc.tech.blocksteps.Objects.SentSteps;
 import gllc.tech.blocksteps.Sensor.StepService;
 import gllc.tech.blocksteps.Sensor.StepService2;
 
@@ -47,7 +52,7 @@ public class SendStepsService extends IntentService {
 
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
-
+    private DatabaseReference mDatabase;
 
     // Must create a default constructor
     public SendStepsService() {
@@ -61,6 +66,9 @@ public class SendStepsService extends IntentService {
         // If a Context object is needed, call getApplicationContext() here.
         sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         editor = sharedPref.edit();
+        //mDatabase = FirebaseDatabase.getInstance().getReference();
+        FirebaseApp.initializeApp(this);
+
     }
 
     @Override
@@ -73,14 +81,57 @@ public class SendStepsService extends IntentService {
         StepService.numSteps =0;
         */
 
+        int lastDate = sharedPref.getInt("lastDate",0);
+        int currentDate = getFormattedDate();
         int steps = sharedPref.getInt("steps",0);
-        sendSteps(steps);
-        StepService2.numSteps =0;
-        editor.putInt("steps", 0).commit();
+        int lastSteps = sharedPref.getInt("lastSteps",0);
+
+        if (steps != lastSteps) {
+            sendSteps(steps, lastDate);
+
+            //might not be best place to put!!!
+            editor.putInt("lastSteps",steps).commit();
+/*
+            Log.i("--All", "Sending to Firebase");
+            String id = sharedPref.getString("uniqueId","NA");
+            SentSteps sentSteps = new SentSteps(getTimeStamp(), steps, id);
+            mDatabase.child("SentSteps").child(id).push().setValue(sentSteps);*/
+        }
+
+        //Log.i("--All", "Last Date: " + lastDate);
+        //Log.i("--All", "Current Date: " + currentDate);
+
+        if (currentDate > lastDate) {
+            Log.i("--All", "Resetting");
+            StepService2.numSteps =0;
+            editor.putInt("steps", 0).commit();
+            editor.putInt("lastDate",currentDate).commit();
+        }
+    }
+
+    public String getTimeStamp() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_YEAR, 0);
+        SimpleDateFormat format = new SimpleDateFormat("MM/dd/yy - HH//mm");
+        String formattedDate = format.format(calendar.getTime());
+
+        return formattedDate;
+    }
+
+    public int getFormattedDate() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_YEAR, 0);
+        SimpleDateFormat format = new SimpleDateFormat("MMddyy");
+        String formattedDate = format.format(calendar.getTime());
+        if (formattedDate.length() == 6) {formattedDate = formattedDate.substring(1);}
+        //Log.i("--All", "Sending Today Date to Server: " + formattedDate);
+        int date = Integer.parseInt(formattedDate);
+
+        return date;
     }
 
 
-    public void sendSteps(int steps) {
+    public void sendSteps(int steps,int date) {
         // This describes what will happen when service is triggered
 
         //Random r = new Random();
@@ -88,12 +139,12 @@ public class SendStepsService extends IntentService {
         //int steps = i1;
 
         //Sending Steps
-        Log.i("--All", "Send Steps from BG Service, Steps: " + steps);
+        Log.i("--All", "Sending Steps from BG Service, Steps: " + steps);
         //Toast.makeText(getApplicationContext(), "Sending Steps from BG Service, Steps: " + steps, Toast.LENGTH_SHORT).show();
         String hexSteps = Integer.toHexString(steps);
         hexSteps = StringUtils.leftPad(hexSteps,64,"0");
         //Log.i("--All", "Steps in Hex: " + hexSteps);
-
+/*
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_YEAR, 0);
         SimpleDateFormat format = new SimpleDateFormat("MMddyy");
@@ -101,6 +152,8 @@ public class SendStepsService extends IntentService {
         if (formattedDate.length() == 6) {formattedDate = formattedDate.substring(1);}
         Log.i("--All", "Sending Today Date to Server: " + formattedDate);
         int date = Integer.parseInt(formattedDate);
+        */
+        //int date = getFormattedDate();
 
         String hexDate = Integer.toHexString(date);
         hexDate = StringUtils.rightPad(hexDate,64,"0");
@@ -123,11 +176,11 @@ public class SendStepsService extends IntentService {
 
         List<Object> sendStepsList = new ArrayList<>();
         Map sendStepsMap = new HashMap();
-        sendStepsMap.put("from", MyApplication.ethAddress);
+        sendStepsMap.put("from", sharedPref.getString("ethAddress","none"));
         sendStepsMap.put("to",MyApplication.contractAddress);
         sendStepsMap.put("data",data);
         sendStepsList.add(sendStepsMap);
-        //Log.i("--All", sendStepsList.toString());
+        Log.i("--All", sendStepsList.toString());
         new ContactBlockchain("eth_sendTransaction",sendStepsList,99, "sentSteps");
     }
 
@@ -159,18 +212,27 @@ public class SendStepsService extends IntentService {
             }
 
             try {response = mySession.send(request);}
-            catch (JSONRPC2SessionException e) {Log.e("--All", "Error Sending Request: " + e.getMessage());}
+            catch (JSONRPC2SessionException e) {Log.e("--All", "Error Sending Request: " + e.getMessage());
+                Crashlytics.logException(e);
+            }
 
-            if (response.indicatesSuccess()) {
-                Log.i("--All", "*******Successful Server Response (From Background): " + response.getResult() +"*******");
+            //try because sometimes null
+            try {response.indicatesSuccess();
+                if (response.indicatesSuccess()) {
+                    Log.i("--All", "*******Successful Server Response (From Background): " + response.getResult() +"*******");
 
-                if (method.equals("eth_sendTransaction") && extra.equals("sentSteps")) {
-                    Log.i("--All", "Successfully Sent Steps");
+                    if (method.equals("eth_sendTransaction") && extra.equals("sentSteps")) {
+                        Log.i("--All", "Successfully Sent Steps");
+
+                    }
                 }
+                else
+                    Log.e("--All", "Error in PostExecute: " + response.getError().getMessage());
+            } catch (Exception e) {
+                //Toast.makeText(getApplicationContext(), "Exception: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                Crashlytics.logException(e);
 
             }
-            else
-                Log.e("--All", "Error in PostExecute: " + response.getError().getMessage());
         }
     }
 

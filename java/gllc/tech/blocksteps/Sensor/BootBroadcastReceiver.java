@@ -6,6 +6,8 @@ import android.support.v4.content.WakefulBroadcastReceiver;
 import android.util.Log;
 import android.widget.Toast;
 
+import gllc.tech.blocksteps.MyTestService;
+
 import static android.support.v4.content.WakefulBroadcastReceiver.startWakefulService;
 
 /**
@@ -18,7 +20,7 @@ public class BootBroadcastReceiver extends WakefulBroadcastReceiver {
         // Launch the specified service when this message is received
         Log.i("--All", "Boot Wakeful");
         Toast.makeText(context, "Boot Wakeful", Toast.LENGTH_LONG).show();
-        Intent startServiceIntent = new Intent(context, StepService2.class);
+        Intent startServiceIntent = new Intent(context, MyTestService.class);
         startWakefulService(context, startServiceIntent);
 
     }

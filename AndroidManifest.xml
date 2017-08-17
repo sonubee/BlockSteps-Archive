@@ -29,6 +29,11 @@
         <service
             android:name=".SendStepsService"
             android:exported="false" />
+
+        <service
+            android:name=".MyTestService"
+            android:exported="false" />
+
         <service
             android:name=".Sensor.StepService"
             android:exported="false"/>
