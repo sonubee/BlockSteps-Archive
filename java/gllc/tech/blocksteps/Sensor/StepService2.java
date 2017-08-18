@@ -32,15 +32,13 @@ import gllc.tech.blocksteps.SetAlarm;
 
 public class StepService2 extends Service implements SensorEventListener, StepListener {
 
-    //private TextView TvSteps;
-    //private Button BtnStart, BtnStop;
+
     private StepDetector simpleStepDetector;
     private SensorManager sensorManager;
     private Sensor accel;
-    private static final String TEXT_NUM_STEPS = "Number of Steps: ";
     public static int numSteps;
     public static boolean isIntentServiceRunning = false;
-    public static final String ACTION = "com.codepath.example.servicesdemo.SendStepsService";
+    public static final String ACTION = "gllc.tech.blocksteps.SendStepsService";
     BroadcastReceiver receiver;
     private Looper mServiceLooper;
     private ServiceHandler mServiceHandler;
@@ -57,20 +55,13 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
 
         Log.i("--All", "StepService2 onCreate = " + sharedPref.getInt("steps",0));
 
-        /*
-        editor.putInt("steps",0);
-        editor.commit();
-        numSteps = 0;
-        */
-
         numSteps = sharedPref.getInt("steps",0);
 
         // Start up the thread running the service.  Note that we create a
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block.  We also make it
         // background priority so CPU-intensive work will not disrupt our UI.
-        HandlerThread thread = new HandlerThread("ServiceStartArguments",
-                10);
+        HandlerThread thread = new HandlerThread("ServiceStartArguments", 10);
         thread.start();
 
         // Get the HandlerThread's Looper and use it for our Handler
@@ -80,7 +71,6 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        //Toast.makeText(this, "Service Starting", Toast.LENGTH_SHORT).show();
         Log.i("--All", "onStartCommand");
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
@@ -90,8 +80,6 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
 
         registerListener();
 
-        //WakefulBroadcastReceiver.completeWakefulIntent(intent);
-
         //to set main ui with steps
         Intent in = new Intent(ACTION);
         // Put extras into the intent as usual
@@ -99,7 +87,6 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
         in.putExtra("resultValue", ""+numSteps);
         // Fire the broadcast with intent packaged
         LocalBroadcastManager.getInstance(this).sendBroadcast(in);
-
 
         // If we get killed, after returning from here, restart
         return START_STICKY;
@@ -116,18 +103,6 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
         public void handleMessage(Message msg) {
             Log.i("--All", "Handle Message");
             // Normally we would do some work here, like download a file.
-            // For our sample, we just sleep for 5 seconds.
-            /*
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                // Restore interrupt status.
-                Thread.currentThread().interrupt();
-            }
-            */
-            // Stop the service using the startId, so that we don't stop
-            // the service in the middle of handling another job
-            //stopSelf(msg.arg1);
         }
     }
 
@@ -194,7 +169,7 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
         Intent in = new Intent(ACTION);
         // Put extras into the intent as usual
         in.putExtra("resultCode", Activity.RESULT_OK);
-        in.putExtra("resultValue", ""+numSteps);
+        in.putExtra("resultValue", ""+ numSteps);
         // Fire the broadcast with intent packaged
         LocalBroadcastManager.getInstance(this).sendBroadcast(in);
 

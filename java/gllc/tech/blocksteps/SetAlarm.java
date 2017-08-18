@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.util.Calendar;
 
@@ -64,8 +65,9 @@ public class SetAlarm {
         Intent intent = new Intent(context, MyAlarmReceiver.class);//the same as up
         intent.setAction(MyAlarmReceiver.ACTION_ALARM_RECEIVER);//the same as up
         boolean isWorking = (PendingIntent.getBroadcast(context, MyAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_NO_CREATE) != null);//just changed the flag
-        Log.i("--All", "alarm is " + (isWorking ? "" : "not") + " working... from SetAlarm");
 
+        Log.i("--All", "alarm is " + (isWorking ? "" : "not") + " working... from SetAlarm");
+        //Toast.makeText(context, "Alarm:" + isWorking, Toast.LENGTH_SHORT).show();
         return isWorking;
     }
 }

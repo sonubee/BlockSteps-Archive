@@ -13,13 +13,6 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.fitness.Fitness;
-import com.google.android.gms.fitness.data.DataSet;
-import com.google.android.gms.fitness.data.DataType;
-import com.google.android.gms.fitness.data.Field;
-import com.google.android.gms.fitness.result.DailyTotalResult;
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
@@ -52,7 +45,6 @@ public class SendStepsService extends IntentService {
 
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
-    private DatabaseReference mDatabase;
 
     // Must create a default constructor
     public SendStepsService() {
@@ -66,8 +58,6 @@ public class SendStepsService extends IntentService {
         // If a Context object is needed, call getApplicationContext() here.
         sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         editor = sharedPref.edit();
-        //mDatabase = FirebaseDatabase.getInstance().getReference();
-        FirebaseApp.initializeApp(this);
 
     }
 
@@ -91,11 +81,19 @@ public class SendStepsService extends IntentService {
 
             //might not be best place to put!!!
             editor.putInt("lastSteps",steps).commit();
-/*
+
             Log.i("--All", "Sending to Firebase");
             String id = sharedPref.getString("uniqueId","NA");
             SentSteps sentSteps = new SentSteps(getTimeStamp(), steps, id);
-            mDatabase.child("SentSteps").child(id).push().setValue(sentSteps);*/
+
+            FirebaseDatabase database = FirebaseDatabase.getInstance();
+            DatabaseReference myRef = database.getReference("SentSteps");
+
+            myRef.child(id).push().setValue(sentSteps);
+            //myRef.setValue("Hello, World113!");
+
+
+            //mDatabase.child("SentSteps").child(id).push().setValue(sentSteps);
         }
 
         //Log.i("--All", "Last Date: " + lastDate);
@@ -112,7 +110,7 @@ public class SendStepsService extends IntentService {
     public String getTimeStamp() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_YEAR, 0);
-        SimpleDateFormat format = new SimpleDateFormat("MM/dd/yy - HH//mm");
+        SimpleDateFormat format = new SimpleDateFormat("HH:mm - MM/dd/yy");
         String formattedDate = format.format(calendar.getTime());
 
         return formattedDate;
@@ -235,7 +233,7 @@ public class SendStepsService extends IntentService {
             }
         }
     }
-
+/*
     public long GetTotalSteps(){
 
         Log.i("--All", "Getting Steps from BackGround");
@@ -258,6 +256,6 @@ public class SendStepsService extends IntentService {
 
         return total;
     }
-
+*/
 }
 
