@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.os.ResultReceiver;
+import android.util.Log;
 
 /**
  * Created by bhangoo on 8/11/2017.
@@ -19,6 +20,7 @@ public class BootStepService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        Log.i("--All", "BootStepService - Came Here!");
         // Extract the receiver passed into the service
         ResultReceiver rec = intent.getParcelableExtra("receiver");
         // Extract additional values from the bundle

@@ -30,11 +30,14 @@ public class MyTestService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         // This describes what will happen when service is triggered
-        Log.i("--All", "Launched Test Service");
+        Log.i("--All", "Launched MyTestService");
         Intent i = new Intent(this, StepService2.class);
         startService(i);
 
-        scheduleAlarm();
+        //scheduleAlarm();
+        new SetAlarm(getApplicationContext());
+        //alarmUp();
+        SetAlarm.alarmUp(getApplicationContext());
 
         //launchTestService();
         WakefulBroadcastReceiver.completeWakefulIntent(intent);
@@ -62,7 +65,17 @@ public class MyTestService extends IntentService {
         // Interval can be INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR, INTERVAL_DAY
         //Log.i("--All", "Interval Alarm Set");
         //alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, AlarmManager.INTERVAL_HOUR, pIntent);
-        Log.i("--All", "Minute and Half Alarm Set");
+        Log.i("--All", "Minute and Half Alarm Set - From Service");
         alarm.setRepeating(AlarmManager.RTC, firstMillis, 1500 * 60, pIntent);
+    }
+
+    public void alarmUp() {
+        boolean alarmUp = (PendingIntent.getBroadcast(getApplicationContext(), MyAlarmReceiver.REQUEST_CODE,
+                new Intent("com.my.package.MY_UNIQUE_ACTION"),
+                PendingIntent.FLAG_NO_CREATE) != null);
+
+        if (alarmUp) Log.i("--All", "Alarm is already active - Service");
+        else Log.i("--All", "Alarm Not Up - Service");
+
     }
 }

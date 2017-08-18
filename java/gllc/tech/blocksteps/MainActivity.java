@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
         //forceCrash(view);
 
         dialog = new ProgressDialog(MainActivity.this);
-        dialog.setMessage("Loading");
+        dialog.setMessage("Loading From BlockChain");
         dialog.show();
 
 
@@ -127,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
         startService(i);
         scheduleAlarm();
         //dailyAlarm();
+        alarmUp();
 
 
 
@@ -303,8 +304,11 @@ public class MainActivity extends AppCompatActivity {
     };
 
     public void scheduleAlarm() {
+        new SetAlarm(getApplicationContext());
+        /*
         // Construct an intent that will execute the AlarmReceiver
         Intent intent = new Intent(getApplicationContext(), MyAlarmReceiver.class);
+        intent.setAction(MyAlarmReceiver.ACTION_ALARM_RECEIVER);//my custom string action name
         // Create a PendingIntent to be triggered when the alarm goes off
         final PendingIntent pIntent = PendingIntent.getBroadcast(this, MyAlarmReceiver.REQUEST_CODE,
                 intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -315,8 +319,9 @@ public class MainActivity extends AppCompatActivity {
         // Interval can be INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR, INTERVAL_DAY
         //Log.i("--All", "Interval Alarm Set");
         //alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, AlarmManager.INTERVAL_HOUR, pIntent);
-        Log.i("--All", "Minute and Half Alarm Set");
+        Log.i("--All", "Minute and Half Alarm Set - MainActivity");
         alarm.setRepeating(AlarmManager.RTC, firstMillis, 1500 * 60, pIntent);
+        */
     }
 
     public void dailyAlarm() {
@@ -339,6 +344,16 @@ public class MainActivity extends AppCompatActivity {
         // constants--in this case, AlarmManager.INTERVAL_DAY.
         alarmMgr.setInexactRepeating(AlarmManager.RTC, calendar.getTimeInMillis(),
                 AlarmManager.INTERVAL_DAY, pIntent);
+    }
+
+    public void alarmUp() {
+        SetAlarm.alarmUp(getApplicationContext());
+        /*
+                Intent intent = new Intent(getApplicationContext(), MyAlarmReceiver.class);//the same as up
+        intent.setAction(MyAlarmReceiver.ACTION_ALARM_RECEIVER);//the same as up
+        boolean isWorking = (PendingIntent.getBroadcast(this, MyAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_NO_CREATE) != null);//just changed the flag
+        Log.i("--All", "alarm is " + (isWorking ? "" : "not") + " working...");
+        */
     }
 
     public class ContactBlockchain extends AsyncTask<Object, Void, JSONRPC2Response> {

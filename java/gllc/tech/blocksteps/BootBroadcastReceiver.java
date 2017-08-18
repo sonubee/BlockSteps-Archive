@@ -1,4 +1,4 @@
-package gllc.tech.blocksteps.Sensor;
+package gllc.tech.blocksteps;
 
 import android.content.Context;
 import android.content.Intent;
