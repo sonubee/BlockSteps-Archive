@@ -109,14 +109,9 @@ public class MainActivity extends AppCompatActivity {
         editor = sharedPref.edit();
         editor.putString("uniqueId",uniqueID).commit();
 
-        View view = null;
-        //forceCrash(view);
-
         dialog = new ProgressDialog(MainActivity.this);
         dialog.setMessage("Loading From BlockChain");
         dialog.show();
-
-
 
         //sharedPref.edit().clear().commit();
 
@@ -125,11 +120,9 @@ public class MainActivity extends AppCompatActivity {
 
         Intent i = new Intent(this, StepService2.class);
         startService(i);
-        scheduleAlarm();
-        //dailyAlarm();
-        alarmUp();
 
-
+        Log.i("--All", "Checking Alarm From MainActivity");
+        if (!(SetAlarm.alarmUp(getApplicationContext()))) new SetAlarm(getApplicationContext());
 
 /*
         int steps = sharedPref.getInt("steps",0);
@@ -164,10 +157,6 @@ public class MainActivity extends AppCompatActivity {
         //todayStepsBig.setText(StepService.numSteps+"");
         //day0Steps.setText(StepService.numSteps+"");
 
-    }
-
-    public void forceCrash(View view) {
-        throw new RuntimeException("This is a crash");
     }
 
 
@@ -302,59 +291,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
-
-    public void scheduleAlarm() {
-        new SetAlarm(getApplicationContext());
-        /*
-        // Construct an intent that will execute the AlarmReceiver
-        Intent intent = new Intent(getApplicationContext(), MyAlarmReceiver.class);
-        intent.setAction(MyAlarmReceiver.ACTION_ALARM_RECEIVER);//my custom string action name
-        // Create a PendingIntent to be triggered when the alarm goes off
-        final PendingIntent pIntent = PendingIntent.getBroadcast(this, MyAlarmReceiver.REQUEST_CODE,
-                intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        // Setup periodic alarm every every half hour from this point onwards
-        long firstMillis = System.currentTimeMillis(); // alarm is set right away
-        AlarmManager alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-        // First parameter is the type: ELAPSED_REALTIME, ELAPSED_REALTIME_WAKEUP, RTC_WAKEUP
-        // Interval can be INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR, INTERVAL_DAY
-        //Log.i("--All", "Interval Alarm Set");
-        //alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, AlarmManager.INTERVAL_HOUR, pIntent);
-        Log.i("--All", "Minute and Half Alarm Set - MainActivity");
-        alarm.setRepeating(AlarmManager.RTC, firstMillis, 1500 * 60, pIntent);
-        */
-    }
-
-    public void dailyAlarm() {
-        Log.i("--All", "Daily Alarm Set");
-        // Construct an intent that will execute the AlarmReceiver
-        Intent intent = new Intent(getApplicationContext(), MyAlarmReceiver.class);
-        // Create a PendingIntent to be triggered when the alarm goes off
-        final PendingIntent pIntent = PendingIntent.getBroadcast(this, MyAlarmReceiver.REQUEST_CODE,
-                intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        // Set the alarm to start at approximately 2:00 p.m.
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(System.currentTimeMillis());
-        //calendar.set(Calendar.HOUR_OF_DAY, 14);
-        calendar.set(Calendar.HOUR_OF_DAY, 23);
-        calendar.set(Calendar.MINUTE, 50);
-
-        AlarmManager alarmMgr = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-
-        // With setInexactRepeating(), you have to use one of the AlarmManager interval
-        // constants--in this case, AlarmManager.INTERVAL_DAY.
-        alarmMgr.setInexactRepeating(AlarmManager.RTC, calendar.getTimeInMillis(),
-                AlarmManager.INTERVAL_DAY, pIntent);
-    }
-
-    public void alarmUp() {
-        SetAlarm.alarmUp(getApplicationContext());
-        /*
-                Intent intent = new Intent(getApplicationContext(), MyAlarmReceiver.class);//the same as up
-        intent.setAction(MyAlarmReceiver.ACTION_ALARM_RECEIVER);//the same as up
-        boolean isWorking = (PendingIntent.getBroadcast(this, MyAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_NO_CREATE) != null);//just changed the flag
-        Log.i("--All", "alarm is " + (isWorking ? "" : "not") + " working...");
-        */
-    }
 
     public class ContactBlockchain extends AsyncTask<Object, Void, JSONRPC2Response> {
 

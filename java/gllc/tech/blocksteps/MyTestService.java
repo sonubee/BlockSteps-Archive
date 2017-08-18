@@ -34,48 +34,9 @@ public class MyTestService extends IntentService {
         Intent i = new Intent(this, StepService2.class);
         startService(i);
 
-        //scheduleAlarm();
-        new SetAlarm(getApplicationContext());
-        //alarmUp();
-        SetAlarm.alarmUp(getApplicationContext());
+        Log.i("--All", "Checking Alarm From MyTestService");
+        if (!(SetAlarm.alarmUp(getApplicationContext()))) new SetAlarm(getApplicationContext());
 
-        //launchTestService();
         WakefulBroadcastReceiver.completeWakefulIntent(intent);
-    }
-
-    public void launchTestService() {
-        // Construct our Intent specifying the Service
-        Intent i = new Intent(this, MyTestService.class);
-        // Add extras to the bundle
-        i.putExtra("foo", "bar");
-        // Start the service
-        startService(i);
-    }
-
-    public void scheduleAlarm() {
-        // Construct an intent that will execute the AlarmReceiver
-        Intent intent = new Intent(getApplicationContext(), MyAlarmReceiver.class);
-        // Create a PendingIntent to be triggered when the alarm goes off
-        final PendingIntent pIntent = PendingIntent.getBroadcast(this, MyAlarmReceiver.REQUEST_CODE,
-                intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        // Setup periodic alarm every every half hour from this point onwards
-        long firstMillis = System.currentTimeMillis(); // alarm is set right away
-        AlarmManager alarm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-        // First parameter is the type: ELAPSED_REALTIME, ELAPSED_REALTIME_WAKEUP, RTC_WAKEUP
-        // Interval can be INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR, INTERVAL_DAY
-        //Log.i("--All", "Interval Alarm Set");
-        //alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, AlarmManager.INTERVAL_HOUR, pIntent);
-        Log.i("--All", "Minute and Half Alarm Set - From Service");
-        alarm.setRepeating(AlarmManager.RTC, firstMillis, 1500 * 60, pIntent);
-    }
-
-    public void alarmUp() {
-        boolean alarmUp = (PendingIntent.getBroadcast(getApplicationContext(), MyAlarmReceiver.REQUEST_CODE,
-                new Intent("com.my.package.MY_UNIQUE_ACTION"),
-                PendingIntent.FLAG_NO_CREATE) != null);
-
-        if (alarmUp) Log.i("--All", "Alarm is already active - Service");
-        else Log.i("--All", "Alarm Not Up - Service");
-
     }
 }

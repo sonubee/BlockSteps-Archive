@@ -31,10 +31,10 @@ public class SetAlarm {
         AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         // First parameter is the type: ELAPSED_REALTIME, ELAPSED_REALTIME_WAKEUP, RTC_WAKEUP
         // Interval can be INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR, INTERVAL_DAY
-        //Log.i("--All", "Hourly Interval Alarm Set");
-        //alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, AlarmManager.INTERVAL_HOUR, pIntent);
-        Log.i("--All", "Minute and Half Alarm Set - SetAlarm");
-        alarm.setRepeating(AlarmManager.RTC, firstMillis, 1500 * 60, pIntent);
+        Log.i("--All", "Hourly Interval Alarm Set");
+        alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, AlarmManager.INTERVAL_HOUR, pIntent);
+        //Log.i("--All", "Minute and Half Alarm Set - SetAlarm");
+        //alarm.setRepeating(AlarmManager.RTC, firstMillis, 1500 * 60, pIntent);
     }
 
     public void dailyAlarm(Context context) {
@@ -60,10 +60,12 @@ public class SetAlarm {
                 AlarmManager.INTERVAL_DAY, pIntent);
     }
 
-    public static void alarmUp(Context context) {
+    public static boolean alarmUp(Context context) {
         Intent intent = new Intent(context, MyAlarmReceiver.class);//the same as up
         intent.setAction(MyAlarmReceiver.ACTION_ALARM_RECEIVER);//the same as up
         boolean isWorking = (PendingIntent.getBroadcast(context, MyAlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_NO_CREATE) != null);//just changed the flag
         Log.i("--All", "alarm is " + (isWorking ? "" : "not") + " working... from SetAlarm");
+
+        return isWorking;
     }
 }

@@ -24,6 +24,8 @@ import android.support.v4.content.WakefulBroadcastReceiver;
 import android.util.Log;
 import android.widget.Toast;
 
+import gllc.tech.blocksteps.SetAlarm;
+
 /**
  * Created by bhangoo on 7/30/2017.
  */
@@ -195,5 +197,8 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
         in.putExtra("resultValue", ""+numSteps);
         // Fire the broadcast with intent packaged
         LocalBroadcastManager.getInstance(this).sendBroadcast(in);
+
+        Log.i("--All", "Checking Alarm From StepService2");
+        if (!(SetAlarm.alarmUp(getApplicationContext()))) new SetAlarm(getApplicationContext());
     }
 }
