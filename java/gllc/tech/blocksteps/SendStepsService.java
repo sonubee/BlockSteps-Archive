@@ -86,14 +86,17 @@ public class SendStepsService extends IntentService {
             String id = sharedPref.getString("uniqueId","NA");
             SentSteps sentSteps = new SentSteps(getTimeStamp(), steps, id);
 
+            /*
             FirebaseDatabase database = FirebaseDatabase.getInstance();
             DatabaseReference myRef = database.getReference("SentSteps");
 
             myRef.child(id).push().setValue(sentSteps);
-            //myRef.setValue("Hello, World113!");
+            */
 
+            FirebaseDatabase database = FirebaseDatabase.getInstance();
+            DatabaseReference myRef = database.getReference(id);
 
-            //mDatabase.child("SentSteps").child(id).push().setValue(sentSteps);
+            myRef.child("SentSteps").push().setValue(sentSteps);
         }
 
         //Log.i("--All", "Last Date: " + lastDate);
@@ -224,8 +227,16 @@ public class SendStepsService extends IntentService {
 
                     }
                 }
-                else
+                else{
                     Log.e("--All", "Error in PostExecute: " + response.getError().getMessage());
+
+                    String userId = sharedPref.getString("uniqueId","NA");
+                    FirebaseDatabase database = FirebaseDatabase.getInstance();
+                    DatabaseReference myRef = database.getReference(userId);
+                    myRef.child("Error").push().setValue(response.getError().toString() + " - In SendStepsService");
+                    Crashlytics.logException(response.getError());
+                }
+
             } catch (Exception e) {
                 //Toast.makeText(getApplicationContext(), "Exception: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 Crashlytics.logException(e);

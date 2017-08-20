@@ -29,33 +29,26 @@ import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.core.CrashlyticsCore;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.Scopes;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
+
+
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.common.api.Status;
-import com.google.android.gms.fitness.Fitness;
-import com.google.android.gms.fitness.data.Bucket;
-import com.google.android.gms.fitness.data.DataPoint;
-import com.google.android.gms.fitness.data.DataSet;
-import com.google.android.gms.fitness.data.DataSource;
-import com.google.android.gms.fitness.data.DataType;
-import com.google.android.gms.fitness.data.Field;
-import com.google.android.gms.fitness.data.Value;
-import com.google.android.gms.fitness.request.DataReadRequest;
-import com.google.android.gms.fitness.request.DataSourcesRequest;
-import com.google.android.gms.fitness.request.OnDataPointListener;
-import com.google.android.gms.fitness.request.SensorRequest;
-import com.google.android.gms.fitness.result.DailyTotalResult;
-import com.google.android.gms.fitness.result.DataReadResult;
-import com.google.android.gms.fitness.result.DataSourcesResult;
+
+
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2Session;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2SessionException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.Web3jFactory;
+import org.web3j.protocol.core.methods.response.Web3ClientVersion;
+import org.web3j.protocol.http.HttpService;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -68,8 +61,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import gllc.tech.blocksteps.Objects.SentSteps;
 import gllc.tech.blocksteps.Sensor.StepService;
 import gllc.tech.blocksteps.Sensor.StepService2;
 import io.fabric.sdk.android.Fabric;
@@ -82,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String TAG = "--All";
     private static final String AUTH_PENDING = "auth_state_pending";
     private boolean authInProgress = false;
-    public static GoogleApiClient mClient = null;
+    //public static GoogleApiClient mClient = null;
     ArrayList<Integer> peopleCount = new ArrayList<>();
     String uniqueID;
     ProgressDialog dialog;
@@ -101,9 +96,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        FirebaseApp.initializeApp(this);
         Fabric.with(this, new Crashlytics());
         uniqueID = getHardwareId(this);
+        //FirebaseApp.initializeApp(this);
 
         sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         editor = sharedPref.edit();
@@ -113,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
         dialog.setMessage("Loading From BlockChain");
         dialog.show();
 
+        //to clear eth address
         //sharedPref.edit().clear().commit();
 
         assignUI();
@@ -124,41 +120,22 @@ public class MainActivity extends AppCompatActivity {
         Log.i("--All", "Checking Alarm From MainActivity");
         if (!(SetAlarm.alarmUp(getApplicationContext()))) new SetAlarm(getApplicationContext());
 
-/*
-        int steps = sharedPref.getInt("steps",0);
-        Log.i("--All", "Main Activity Steps = " + steps);
+        //Crashlytics.log("Test Log");
 
-        todayStepsBig.setText(Integer.toString(steps));
-        day0Steps.setText(Integer.toString(steps));
-*/
-        //todayStepsBig.setText(StepService2.numSteps+"");
-        //day0Steps.setText(StepService2.numSteps+"");
-
-
-/*
-        if (savedInstanceState != null) {
-            authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
+        Web3j web3 = Web3jFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
+        Web3ClientVersion web3ClientVersion = null;
+        try {
+            web3ClientVersion = web3.web3ClientVersion().sendAsync().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
         }
+        String clientVersion = web3ClientVersion.getWeb3ClientVersion();
 
-        buildFitnessClient();
-*/
-
-
-
-/*
-        if (!StepService.isIntentServiceRunning) {
-            //Toast.makeText(getApplicationContext(), "Starting Service", Toast.LENGTH_SHORT).show();
-            Intent i = new Intent(this, StepService.class);
-            //i.putExtra("foo", "bar");
-            startService(i);
-            dailyAlarm();
-        }
-*/
-        //todayStepsBig.setText(StepService.numSteps+"");
-        //day0Steps.setText(StepService.numSteps+"");
+        Log.i("--All", "FIIIIIIIIIIIIIIIIIINDMEEEE"+clientVersion);
 
     }
-
 
     private void checkEthereumAddress() {
 
@@ -225,47 +202,7 @@ public class MainActivity extends AppCompatActivity {
         new ContactBlockchain().execute("eth_call",getStepsList,99, sharedPref,call,day);
     }
 
-    private void buildFitnessClient() {
-        // Create the Google API Client
-        mClient = new GoogleApiClient.Builder(this)
-                .addApi(Fitness.HISTORY_API)
-                .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ_WRITE))
-                .addConnectionCallbacks(
-                        new GoogleApiClient.ConnectionCallbacks() {
-                            @Override
-                            public void onConnected(Bundle bundle) {
-                                Log.i(TAG, "Connected!!!");
-                                // Now you can make calls to the Fitness APIs.  What to do?
-                                // Look at some data!!
-                                //new InsertAndVerifyDataTask().execute();
-                                //new VerifyDataTask().execute();
 
-                                //scheduleAlarm();
-                                //dailyAlarm();
-                            }
-
-                            @Override
-                            public void onConnectionSuspended(int i) {
-                                // If your connection to the sensor gets lost at some point,
-                                // you'll be able to determine the reason and react to it here.
-                                Log.i("--All", "Disconnected!!!");
-                                if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_NETWORK_LOST) {
-                                    Log.i(TAG, "Connection lost.  Cause: Network Lost.");
-                                } else if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_SERVICE_DISCONNECTED) {
-                                    Log.i(TAG, "Connection lost.  Reason: Service Disconnected");
-                                }
-                            }
-                        }
-                )
-                .enableAutoManage(this, 0, new GoogleApiClient.OnConnectionFailedListener() {
-                    @Override
-                    public void onConnectionFailed(ConnectionResult result) {
-                        Log.i(TAG, "Google Play services connection failed. Cause: " +
-                                result.toString());
-                    }
-                })
-                .build();
-    }
 
     @Override
     protected void onResume() {
@@ -480,8 +417,16 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                 }
-                else
+                else{
                     Log.e("--All", "Error in PostExecute: " + response.getError().getMessage());
+
+                    String id = sharedPref.getString("uniqueId","NA");
+                    FirebaseDatabase database = FirebaseDatabase.getInstance();
+                    DatabaseReference myRef = database.getReference(id);
+                    myRef.child("Error").push().setValue(response.getError().toString() + " - In MainActivity");
+                    Crashlytics.logException(response.getError());
+                }
+
             } catch (Exception e) {
                 //Toast.makeText(getApplicationContext(), "Exception: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 Crashlytics.logException(e);
@@ -539,6 +484,46 @@ public class MainActivity extends AppCompatActivity {
     public static String getHardwareId(Context context) {
         return Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
     }
+/*
+    private void buildFitnessClient() {
+        // Create the Google API Client
+        mClient = new GoogleApiClient.Builder(this)
+                .addApi(Fitness.HISTORY_API)
+                .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ_WRITE))
+                .addConnectionCallbacks(
+                        new GoogleApiClient.ConnectionCallbacks() {
+                            @Override
+                            public void onConnected(Bundle bundle) {
+                                Log.i(TAG, "Connected!!!");
+                                // Now you can make calls to the Fitness APIs.  What to do?
+                                // Look at some data!!
+                                //new InsertAndVerifyDataTask().execute();
+                                //new VerifyDataTask().execute();
 
+                                //scheduleAlarm();
+                                //dailyAlarm();
+                            }
 
+                            @Override
+                            public void onConnectionSuspended(int i) {
+                                // If your connection to the sensor gets lost at some point,
+                                // you'll be able to determine the reason and react to it here.
+                                Log.i("--All", "Disconnected!!!");
+                                if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_NETWORK_LOST) {
+                                    Log.i(TAG, "Connection lost.  Cause: Network Lost.");
+                                } else if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_SERVICE_DISCONNECTED) {
+                                    Log.i(TAG, "Connection lost.  Reason: Service Disconnected");
+                                }
+                            }
+                        }
+                )
+                .enableAutoManage(this, 0, new GoogleApiClient.OnConnectionFailedListener() {
+                    @Override
+                    public void onConnectionFailed(ConnectionResult result) {
+                        Log.i(TAG, "Google Play services connection failed. Cause: " +
+                                result.toString());
+                    }
+                })
+                .build();
+    }*/
 }
