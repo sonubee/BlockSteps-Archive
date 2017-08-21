@@ -32,10 +32,10 @@ public class SetAlarm {
         AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         // First parameter is the type: ELAPSED_REALTIME, ELAPSED_REALTIME_WAKEUP, RTC_WAKEUP
         // Interval can be INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR, INTERVAL_DAY
-        Log.i("--All", "Hourly Interval Alarm Set");
-        alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, AlarmManager.INTERVAL_HOUR, pIntent);
-        //Log.i("--All", "Minute and Half Alarm Set - SetAlarm");
-        //alarm.setRepeating(AlarmManager.RTC, firstMillis, 1000 * 60, pIntent);
+        //Log.i("--All", "Hourly Interval Alarm Set");
+        //alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, AlarmManager.INTERVAL_HOUR, pIntent);
+        Log.i("--All", "Minute and Half Alarm Set - SetAlarm");
+        alarm.setRepeating(AlarmManager.RTC, firstMillis, 1000 * 60, pIntent);
     }
 
     public void dailyAlarm(Context context) {

@@ -21,6 +21,10 @@ import com.thetransactioncompany.jsonrpc2.client.JSONRPC2Session;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2SessionException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.web3j.protocol.http.HttpService;
+import org.web3j.protocol.parity.Parity;
+import org.web3j.protocol.parity.ParityFactory;
+import org.web3j.protocol.parity.methods.response.PersonalUnlockAccount;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -31,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import gllc.tech.blocksteps.Objects.SentSteps;
@@ -45,6 +50,7 @@ public class SendStepsService extends IntentService {
 
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
 
     // Must create a default constructor
     public SendStepsService() {
@@ -58,6 +64,25 @@ public class SendStepsService extends IntentService {
         // If a Context object is needed, call getApplicationContext() here.
         sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         editor = sharedPref.edit();
+
+        Parity parity = ParityFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
+        PersonalUnlockAccount personalUnlockAccount = null;
+        try {
+            personalUnlockAccount = parity.personalUnlockAccount(sharedPref.getString("ethAddress","none"), sharedPref.getString("uniqueId","none")).sendAsync().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        if (personalUnlockAccount.accountUnlocked()) {
+            // send a transaction, or use parity.personalSignAndSendTransaction() to do it all in one
+            Log.i("--All", "Account Unlocked with Parity");
+        } else {
+            Log.i("--All", "Error Unlocking Account with Parity");
+            DatabaseReference myRef = database.getReference("Error");
+            myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "Error Unlocking Account with Parity - In SendStepsService");
+
+        }
 
     }
 
@@ -86,14 +111,6 @@ public class SendStepsService extends IntentService {
             String id = sharedPref.getString("uniqueId","NA");
             SentSteps sentSteps = new SentSteps(getTimeStamp(), steps, id);
 
-            /*
-            FirebaseDatabase database = FirebaseDatabase.getInstance();
-            DatabaseReference myRef = database.getReference("SentSteps");
-
-            myRef.child(id).push().setValue(sentSteps);
-            */
-
-            FirebaseDatabase database = FirebaseDatabase.getInstance();
             DatabaseReference myRef = database.getReference(id);
 
             myRef.child("SentSteps").push().setValue(sentSteps);
@@ -119,7 +136,7 @@ public class SendStepsService extends IntentService {
         return formattedDate;
     }
 
-    public int getFormattedDate() {
+    public static int getFormattedDate() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_YEAR, 0);
         SimpleDateFormat format = new SimpleDateFormat("MMddyy");
@@ -230,10 +247,8 @@ public class SendStepsService extends IntentService {
                 else{
                     Log.e("--All", "Error in PostExecute: " + response.getError().getMessage());
 
-                    String userId = sharedPref.getString("uniqueId","NA");
-                    FirebaseDatabase database = FirebaseDatabase.getInstance();
-                    DatabaseReference myRef = database.getReference(userId);
-                    myRef.child("Error").push().setValue(response.getError().toString() + " - In SendStepsService");
+                    DatabaseReference myRef = database.getReference("Error");
+                    myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + response.getError().toString() + " - In SendStepsService");
                     Crashlytics.logException(response.getError());
                 }
 

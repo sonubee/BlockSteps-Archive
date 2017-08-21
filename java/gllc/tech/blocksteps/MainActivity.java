@@ -45,23 +45,66 @@ import com.thetransactioncompany.jsonrpc2.client.JSONRPC2Session;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2SessionException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.FunctionReturnDecoder;
+import org.web3j.abi.TypeReference;
+import org.web3j.abi.datatypes.Address;
+import org.web3j.abi.datatypes.Bool;
+import org.web3j.abi.datatypes.Type;
+import org.web3j.abi.datatypes.Uint;
+import org.web3j.abi.datatypes.generated.Uint256;
+import org.web3j.crypto.CipherException;
+import org.web3j.crypto.Credentials;
+import org.web3j.crypto.WalletUtils;
+import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.request.Transaction;
+import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
+import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.exceptions.TransactionTimeoutException;
+import org.web3j.protocol.http.HttpService;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.Web3jFactory;
+import org.web3j.abi.datatypes.Address;
+import org.web3j.abi.datatypes.Function;
+import org.web3j.abi.datatypes.Type;
+import org.web3j.abi.datatypes.Utf8String;
+import org.web3j.abi.datatypes.generated.Bytes32;
+import org.web3j.abi.datatypes.generated.Uint256;
+import org.web3j.abi.datatypes.generated.Uint8;
+import org.web3j.abi.datatypes.Function;
+import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.methods.response.Web3ClientVersion;
-import org.web3j.protocol.http.HttpService;
+import org.web3j.protocol.parity.Parity;
+import org.web3j.protocol.parity.ParityFactory;
+import org.web3j.protocol.parity.methods.response.PersonalUnlockAccount;
+import org.web3j.tx.Transfer;
 
+import org.web3j.utils.Convert;
+
+
+import java.io.File;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import gllc.tech.blocksteps.Objects.SentSteps;
@@ -69,8 +112,11 @@ import gllc.tech.blocksteps.Sensor.StepService;
 import gllc.tech.blocksteps.Sensor.StepService2;
 import io.fabric.sdk.android.Fabric;
 
+import static android.R.attr.value;
 import static java.text.DateFormat.getDateInstance;
 import static java.text.DateFormat.getTimeInstance;
+import static org.web3j.tx.Contract.GAS_LIMIT;
+import static org.web3j.tx.ManagedTransaction.GAS_PRICE;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -90,23 +136,32 @@ public class MainActivity extends AppCompatActivity {
     TextView day0Title, day1Title, day2Title, day3Title, day4Title, day5Title, day6Title;
     TextView peopleCount0, peopleCount1, peopleCount2, peopleCount3, peopleCount4, peopleCount5, peopleCount6;
     TextView avgPeopleSteps0, avgPeopleSteps1 , avgPeopleSteps2, avgPeopleSteps3, avgPeopleSteps4, avgPeopleSteps5, avgPeopleSteps6;
+    TextView versionName;
+
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
+
+    Credentials credentials = null;
+    Web3j web3 = Web3jFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
+    _Users_Admin_Desktop_Steps_sol_Steps contract;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Fabric.with(this, new Crashlytics());
+        //Fabric.with(this, new Crashlytics());
         uniqueID = getHardwareId(this);
         //FirebaseApp.initializeApp(this);
 
         sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         editor = sharedPref.edit();
         editor.putString("uniqueId",uniqueID).commit();
+        //editor.putString("ethAddress","none").commit();
+        //editor.putString("ethAddress","0x14694471df6c9e2b2fe8e16ea98e12b421042bd6").commit();
 
         dialog = new ProgressDialog(MainActivity.this);
         dialog.setMessage("Loading From BlockChain");
-        dialog.show();
+        //dialog.show();
 
         //to clear eth address
         //sharedPref.edit().clear().commit();
@@ -122,7 +177,38 @@ public class MainActivity extends AppCompatActivity {
 
         //Crashlytics.log("Test Log");
 
-        Web3j web3 = Web3jFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
+
+/*
+//Creating wallet
+        String fileName = "not set";
+
+        try {
+            fileName = WalletUtils.generateNewWalletFile(
+                    uniqueID,
+                    new File(getFilesDir(), "/"),false);
+        } catch (CipherException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            e.printStackTrace();
+        } catch (IOException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            e.printStackTrace();
+        } catch (InvalidAlgorithmParameterException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        Log.i("--All", "Filename: " + fileName);
+        Cre
+*/
+
+        new OpenWallet().execute();
+
         Web3ClientVersion web3ClientVersion = null;
         try {
             web3ClientVersion = web3.web3ClientVersion().sendAsync().get();
@@ -133,8 +219,122 @@ public class MainActivity extends AppCompatActivity {
         }
         String clientVersion = web3ClientVersion.getWeb3ClientVersion();
 
-        Log.i("--All", "FIIIIIIIIIIIIIIIIIINDMEEEE"+clientVersion);
+        Log.i("--All", "Client Version: "+clientVersion);
 
+        //Log.i("--All", "Address from SharedPref: " + sharedPref.getString("ethAddress","none"));
+
+        Parity parity = ParityFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
+        PersonalUnlockAccount personalUnlockAccount = null;
+        try {
+            personalUnlockAccount = parity.personalUnlockAccount(sharedPref.getString("ethAddress","none"), uniqueID).sendAsync().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        if (personalUnlockAccount.accountUnlocked()) {
+            // send a transaction, or use parity.personalSignAndSendTransaction() to do it all in one
+            Log.i("--All", "Account Unlocked with Parity");
+        }
+    /*
+        //Call function
+        Function function = new Function(
+                //"returnInt2",
+                //"everyoneStepsDate",
+                //"recallMySteps",
+                "countAllPeopleDate",
+                //"returnString",
+                //"getMap",
+                //Arrays.<Type>asList(new Utf8String(Integer.toString(SendStepsService.getFormattedDate()))),
+                Arrays.<Type>asList(new Utf8String("82017")),
+                //Arrays.<Type>asList(new Uint256(1)),
+                //Arrays.<Type>asList(),
+                //Arrays.<TypeReference<?>>asList(new TypeReference<Utf8String>() { }));
+                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() { }));
+
+
+        String encodedFunction = FunctionEncoder.encode(function);
+        org.web3j.protocol.core.methods.response.EthCall response = null;
+        try {
+            response = web3.ethCall(
+                    Transaction.createEthCallTransaction(sharedPref.getString("ethAddress","none"), MyApplication.contractAddress, encodedFunction),
+                    DefaultBlockParameterName.LATEST)
+                    .sendAsync().get();
+        } catch (InterruptedException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        List<Type> someTypes = FunctionReturnDecoder.decode(
+                response.getValue(), function.getOutputParameters());
+
+        Log.i("--All", "Response Hex: " + response.getValue());
+        Toast.makeText(getApplicationContext(), "Response: " + someTypes.get(0).getValue(), Toast.LENGTH_LONG).show();
+        Log.i("--All", "Response: " + someTypes.get(0).getValue());
+
+//Create nonce
+        EthGetTransactionCount ethGetTransactionCount = null;
+        try {
+            ethGetTransactionCount = web3.ethGetTransactionCount(
+                    //sharedPref.getString("ethAddress","none"), DefaultBlockParameterName.LATEST).sendAsync().get();
+                    MyApplication.contractAddress, DefaultBlockParameterName.LATEST).sendAsync().get();
+        } catch (InterruptedException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            e.printStackTrace();
+        }
+        BigInteger nonce = ethGetTransactionCount.getTransactionCount();
+        BigInteger nonce2 = new BigInteger("229");
+
+        Log.i("--All", "Nonce: " + nonce);
+
+//Create Transaction
+
+        Function function2 = new Function(
+                "saveMySteps",  // function we're calling
+                Arrays.<Type>asList(new Uint256(25), new Utf8String("82117")),  // Parameters to pass as Solidity Types
+                Arrays.<TypeReference<?>>asList());
+
+        String encodedFunction2 = FunctionEncoder.encode(function2);
+        Transaction transaction = Transaction.createFunctionCallTransaction(
+                sharedPref.getString("ethAddress","none"), nonce, Transaction.DEFAULT_GAS, new BigInteger("2100000"), MyApplication.contractAddress, new BigInteger("1"), encodedFunction2);
+
+        org.web3j.protocol.core.methods.response.EthSendTransaction transactionResponse = null;
+        try {
+            transactionResponse = web3.ethSendTransaction(transaction).sendAsync().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Log.i("--All", "Error: " + e.getMessage());
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+            Log.i("--All", "Error: " + e.getMessage());
+        }
+
+        String transactionHash = transactionResponse.getTransactionHash();
+        Log.i("--All", "Hash: "+transactionHash);
+
+//Get Receipt
+
+        EthGetTransactionReceipt transactionReceipt = null;
+        try {
+            transactionReceipt = web3.ethGetTransactionReceipt(transactionHash).sendAsync().get();
+            //transactionReceipt = web3.ethGetTransactionReceipt("0xf97162cea7755217a0bf32f1a19375f5afdf9863cc6360cb1d9471512f334666").sendAsync().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Log.i("--All", "Error: " + e.getMessage());
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+            Log.i("--All", "Error: " + e.getMessage());
+        }
+
+
+        //Log.i("--All", "FIIIIIIIIIIIIIIIIIINDMEEEE"+transactionReceipt.getTransactionReceipt().toString());
+*/
     }
 
     private void checkEthereumAddress() {
@@ -228,6 +428,78 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    public class OpenWallet extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+
+            try {
+                credentials = WalletUtils.loadCredentials(
+                        uniqueID,
+                        getFilesDir().getAbsolutePath() + "/UTC--2017-08-21T12-05-29.193--50d0368dacf0e9b984ebf9c2322437630939b819.json");
+            } catch (IOException e) {
+                Log.i("--All", "Error: " + e.getMessage());
+                e.printStackTrace();
+            } catch (CipherException e) {
+                Log.i("--All", "Error: " + e.getMessage());
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            Log.i("--All", "Credentials Address: " + credentials.getAddress());
+
+            new CreateContract().execute();
+        }
+    }
+
+    public class CreateContract extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            Log.i("--All", "Creating Contract");
+            contract = _Users_Admin_Desktop_Steps_sol_Steps.load(MyApplication.contractAddress, web3, credentials, GAS_PRICE, GAS_LIMIT);
+
+            try {
+                Log.i("--All", "Contract Valid: " + contract.isValid());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            Log.i("--All", "Invoking Method");
+            Future<TransactionReceipt> temp = contract.saveMySteps(new Uint256(55),new Utf8String("82117"));
+            try {
+                Log.i("--All", "Hash: "+temp.get().getTransactionHash());
+                Log.i("--All", "Contract Address: "+temp.get().getContractAddress());
+                Log.i("--All", "Block Number: "+temp.get().getBlockNumber());
+
+
+                Future<Uint256> resultSteps = contract.everyoneStepsDate(new Utf8String("82117"));
+                Log.i("--All", "Everyone Steps: " + resultSteps.get().getValue());
+
+                Future<Uint256> mySteps = contract.recallMySteps(new Utf8String("82117"));
+                Log.i("--All", "My Steps: " + mySteps.get().getValue());
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+
+
+        }
+    }
 
     public class ContactBlockchain extends AsyncTask<Object, Void, JSONRPC2Response> {
 
@@ -404,6 +676,7 @@ public class MainActivity extends AppCompatActivity {
                         if (peopleCount.get(index) != 0) avgSteps = i / peopleCount.get(index);
                         else avgSteps = 0;
 
+                        //Log.i("--All", "Everyone Steps = " + i);
 
                         if (day == 0 ) avgPeopleSteps0.setText(avgSteps+"");
                         if (day == -1 ) avgPeopleSteps1.setText(avgSteps+"");
@@ -420,15 +693,14 @@ public class MainActivity extends AppCompatActivity {
                 else{
                     Log.e("--All", "Error in PostExecute: " + response.getError().getMessage());
 
-                    String id = sharedPref.getString("uniqueId","NA");
-                    FirebaseDatabase database = FirebaseDatabase.getInstance();
-                    DatabaseReference myRef = database.getReference(id);
-                    myRef.child("Error").push().setValue(response.getError().toString() + " - In MainActivity");
+                    DatabaseReference myRef = database.getReference("Error");
+                    myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + response.getError().toString() + " - In MainActivity");
                     Crashlytics.logException(response.getError());
                 }
 
             } catch (Exception e) {
                 //Toast.makeText(getApplicationContext(), "Exception: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                Log.i("--All", "Error: " + e.getMessage());
                 Crashlytics.logException(e);
             }
 
@@ -479,6 +751,9 @@ public class MainActivity extends AppCompatActivity {
         peopleCount4 = (TextView)findViewById(R.id.peopleCount4);
         peopleCount5 = (TextView)findViewById(R.id.peopleCount5);
         peopleCount6 = (TextView)findViewById(R.id.peopleCount6);
+
+        versionName = (TextView)findViewById(R.id.versionName);
+        versionName.setText("Version: " + BuildConfig.VERSION_NAME);
     }
 
     public static String getHardwareId(Context context) {
