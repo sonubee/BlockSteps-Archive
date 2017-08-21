@@ -34,8 +34,9 @@ public class MyTestService extends IntentService {
         Intent i = new Intent(this, StepService2.class);
         startService(i);
 
-        Log.i("--All", "Checking Alarm From MyTestService");
-        if (!(SetAlarm.alarmUp(getApplicationContext()))) new SetAlarm(getApplicationContext());
+        Log.i("--All", "Resetting Alarm From MyTestService");
+        //if (!(SetAlarm.alarmUp(getApplicationContext()))) new SetAlarm(getApplicationContext());
+        SetAlarm.resetAlarm(getApplicationContext());
 
         WakefulBroadcastReceiver.completeWakefulIntent(intent);
     }

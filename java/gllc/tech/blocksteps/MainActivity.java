@@ -55,11 +55,15 @@ import org.web3j.abi.datatypes.Uint;
 import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Credentials;
+import org.web3j.crypto.TransactionEncoder;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.request.RawTransaction;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
+import org.web3j.protocol.core.methods.response.EthSendRawTransaction;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionTimeoutException;
 import org.web3j.protocol.http.HttpService;
@@ -81,6 +85,7 @@ import org.web3j.protocol.parity.methods.response.PersonalUnlockAccount;
 import org.web3j.tx.Transfer;
 
 import org.web3j.utils.Convert;
+import org.web3j.utils.Numeric;
 
 
 import java.io.File;
@@ -128,6 +133,8 @@ public class MainActivity extends AppCompatActivity {
     String uniqueID;
     ProgressDialog dialog;
 
+    boolean firstLoad = false;
+
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
 
@@ -142,244 +149,39 @@ public class MainActivity extends AppCompatActivity {
 
     Credentials credentials = null;
     Web3j web3 = Web3jFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
-    _Users_Admin_Desktop_Steps_sol_Steps contract;
+    public static _Users_Admin_Desktop_Steps_sol_Steps contract;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //Fabric.with(this, new Crashlytics());
         uniqueID = getHardwareId(this);
-        //FirebaseApp.initializeApp(this);
+        Fabric.with(this, new Crashlytics());
 
         sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         editor = sharedPref.edit();
         editor.putString("uniqueId",uniqueID).commit();
-        //editor.putString("ethAddress","none").commit();
-        //editor.putString("ethAddress","0x14694471df6c9e2b2fe8e16ea98e12b421042bd6").commit();
 
         dialog = new ProgressDialog(MainActivity.this);
-        dialog.setMessage("Loading From BlockChain");
-        //dialog.show();
-
-        //to clear eth address
-        //sharedPref.edit().clear().commit();
+        dialog.setMessage("Loading From BlockChain - Can Take A While");
+        dialog.show();
 
         assignUI();
-        //checkEthereumAddress();
         checkForWallet();
 
         Intent i = new Intent(this, StepService2.class);
         startService(i);
-
-        Log.i("--All", "Checking Alarm From MainActivity");
-        //if (!(SetAlarm.alarmUp(getApplicationContext()))) new SetAlarm(getApplicationContext());
-
-        //Crashlytics.log("Test Log");
-
-        Web3ClientVersion web3ClientVersion = null;
-        try {
-            web3ClientVersion = web3.web3ClientVersion().sendAsync().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        String clientVersion = web3ClientVersion.getWeb3ClientVersion();
-
-        Log.i("--All", "Client Version: "+clientVersion);
-
-        //Log.i("--All", "Address from SharedPref: " + sharedPref.getString("ethAddress","none"));
-/*
-        Parity parity = ParityFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
-        PersonalUnlockAccount personalUnlockAccount = null;
-        try {
-            personalUnlockAccount = parity.personalUnlockAccount(sharedPref.getString("ethAddress","none"), uniqueID).sendAsync().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        if (personalUnlockAccount.accountUnlocked()) {
-            // send a transaction, or use parity.personalSignAndSendTransaction() to do it all in one
-            Log.i("--All", "Account Unlocked with Parity");
-        }
-        */
-    /*
-        //Call function
-        Function function = new Function(
-                //"returnInt2",
-                //"everyoneStepsDate",
-                //"recallMySteps",
-                "countAllPeopleDate",
-                //"returnString",
-                //"getMap",
-                //Arrays.<Type>asList(new Utf8String(Integer.toString(SendStepsService.getFormattedDate()))),
-                Arrays.<Type>asList(new Utf8String("82017")),
-                //Arrays.<Type>asList(new Uint256(1)),
-                //Arrays.<Type>asList(),
-                //Arrays.<TypeReference<?>>asList(new TypeReference<Utf8String>() { }));
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() { }));
-
-
-        String encodedFunction = FunctionEncoder.encode(function);
-        org.web3j.protocol.core.methods.response.EthCall response = null;
-        try {
-            response = web3.ethCall(
-                    Transaction.createEthCallTransaction(sharedPref.getString("ethAddress","none"), MyApplication.contractAddress, encodedFunction),
-                    DefaultBlockParameterName.LATEST)
-                    .sendAsync().get();
-        } catch (InterruptedException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        List<Type> someTypes = FunctionReturnDecoder.decode(
-                response.getValue(), function.getOutputParameters());
-
-        Log.i("--All", "Response Hex: " + response.getValue());
-        Toast.makeText(getApplicationContext(), "Response: " + someTypes.get(0).getValue(), Toast.LENGTH_LONG).show();
-        Log.i("--All", "Response: " + someTypes.get(0).getValue());
-
-//Create nonce
-        EthGetTransactionCount ethGetTransactionCount = null;
-        try {
-            ethGetTransactionCount = web3.ethGetTransactionCount(
-                    //sharedPref.getString("ethAddress","none"), DefaultBlockParameterName.LATEST).sendAsync().get();
-                    MyApplication.contractAddress, DefaultBlockParameterName.LATEST).sendAsync().get();
-        } catch (InterruptedException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            e.printStackTrace();
-        }
-        BigInteger nonce = ethGetTransactionCount.getTransactionCount();
-        BigInteger nonce2 = new BigInteger("229");
-
-        Log.i("--All", "Nonce: " + nonce);
-
-//Create Transaction
-
-        Function function2 = new Function(
-                "saveMySteps",  // function we're calling
-                Arrays.<Type>asList(new Uint256(25), new Utf8String("82117")),  // Parameters to pass as Solidity Types
-                Arrays.<TypeReference<?>>asList());
-
-        String encodedFunction2 = FunctionEncoder.encode(function2);
-        Transaction transaction = Transaction.createFunctionCallTransaction(
-                sharedPref.getString("ethAddress","none"), nonce, Transaction.DEFAULT_GAS, new BigInteger("2100000"), MyApplication.contractAddress, new BigInteger("1"), encodedFunction2);
-
-        org.web3j.protocol.core.methods.response.EthSendTransaction transactionResponse = null;
-        try {
-            transactionResponse = web3.ethSendTransaction(transaction).sendAsync().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            Log.i("--All", "Error: " + e.getMessage());
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-            Log.i("--All", "Error: " + e.getMessage());
-        }
-
-        String transactionHash = transactionResponse.getTransactionHash();
-        Log.i("--All", "Hash: "+transactionHash);
-
-//Get Receipt
-
-        EthGetTransactionReceipt transactionReceipt = null;
-        try {
-            transactionReceipt = web3.ethGetTransactionReceipt(transactionHash).sendAsync().get();
-            //transactionReceipt = web3.ethGetTransactionReceipt("0xf97162cea7755217a0bf32f1a19375f5afdf9863cc6360cb1d9471512f334666").sendAsync().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            Log.i("--All", "Error: " + e.getMessage());
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-            Log.i("--All", "Error: " + e.getMessage());
-        }
-
-
-        //Log.i("--All", "FIIIIIIIIIIIIIIIIIINDMEEEE"+transactionReceipt.getTransactionReceipt().toString());
-*/
     }
 
     private void checkForWallet() {
-        if (sharedPref.getString("walletFileName","none").equals("none")) new CreateWallet().execute();
-        else new LoadCredentials().execute();
-    }
-
-
-
-    private void checkEthereumAddress() {
-
-        MyApplication.ethAddress = sharedPref.getString("ethAddress","none");
-
-        if (MyApplication.ethAddress.equals("none")) {
-            Log.i("--All", "Requesting ethAddress");
-            List<Object> params = new ArrayList<>();
-            params.add(uniqueID);
-            //Toast.makeText(getApplicationContext(),"One Moment",Toast.LENGTH_SHORT).show();
-            new ContactBlockchain().execute("personal_newAccount",params,99, sharedPref, "NA");
-            //Toast.makeText(getApplicationContext(),"Getting New Address",Toast.LENGTH_SHORT).show();
+        if (sharedPref.getString("walletFileName","none").equals("none")){
+            firstLoad=true;
+            new CreateWallet().execute();
         }
 
-        else {
-            Log.i("--All", "Already Have ethAddress");
-            MyApplication.ethAddress = sharedPref.getString("ethAddress","none");
-
-            List<Object> params = new ArrayList<>();
-            params.add(MyApplication.ethAddress);
-            params.add(uniqueID);
-            params.add(0);
-
-            new ContactBlockchain().execute("personal_unlockAccount",params,99, sharedPref,"personalUnlock");
-
-            //Toast.makeText(getApplicationContext(),"Loading Your Data",Toast.LENGTH_SHORT).show();
-        }
+        else{ new LoadCredentials().execute();}
     }
-
-    public void makeEthCall(int day, String call, String prefix) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_YEAR, day);
-        SimpleDateFormat format = new SimpleDateFormat("MMddyy");
-        String formattedDate = format.format(calendar.getTime());
-        if (formattedDate.length() == 6) {formattedDate = formattedDate.substring(1);}
-        //Log.i("--All", "Day: " + formattedDate);
-
-        //Position of Date in bytes
-        String first64 = "0000000000000000000000000000000000000000000000000000000000000020";
-        //Length of Date
-        int dateLength = formattedDate.length();
-        //Log.i("--All", "DateLength: " + dateLength);
-        String dateLengthHex = Integer.toHexString(dateLength);
-        dateLengthHex = StringUtils.leftPad(dateLengthHex,64,"0");
-        //Log.i("--All", "DateLength in Hex: " + dateLengthHex);
-        String second64 = dateLengthHex;
-        //Date in Hex
-        String hexDate = Integer.toHexString(Integer.parseInt(formattedDate));
-        hexDate = StringUtils.rightPad(hexDate,64,"0");
-        //Log.i("--All", "Date in Hex: " + hexDate);
-        String third64 = hexDate;
-
-        String data = prefix+first64+second64+third64;
-
-        List<Object> getStepsList = new ArrayList<>();
-        Map getStepsMap = new HashMap();
-        getStepsMap.put("from", MyApplication.ethAddress);
-        getStepsMap.put("to",MyApplication.contractAddress);
-        getStepsMap.put("data",data);
-        getStepsList.add(getStepsMap);
-        getStepsList.add("latest");
-        //Log.i("--All", getStepsList.toString());
-
-        new ContactBlockchain().execute("eth_call",getStepsList,99, sharedPref,call,day);
-    }
-
-
 
     @Override
     protected void onResume() {
@@ -406,15 +208,11 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-
-
-
     public class ContactBlockchain extends AsyncTask<Object, Void, JSONRPC2Response> {
 
         String method;
         String extra;
         SharedPreferences sharedPref;
-        //TextView displaySteps;
         int day=1;
 
         @Override
@@ -453,7 +251,10 @@ public class MainActivity extends AppCompatActivity {
             }
 
             try {response = mySession.send(request);}
-            catch (JSONRPC2SessionException e) {Log.e("--All", "Error Sending Request: " + e.getMessage());}
+            catch (JSONRPC2SessionException e) {
+                Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
+            }
 
             return response;
         }
@@ -464,27 +265,7 @@ public class MainActivity extends AppCompatActivity {
             // Print response result / error
             try {response.indicatesSuccess();
                 if (response.indicatesSuccess()) {
-                    //Log.i("--All", "*******Successful Server Response: " + response.getResult() +"*******");
-
-                    //Storing new address in SharedPreferences
-                    if (method.equals("personal_newAccount")) {
-                        SharedPreferences.Editor editor = sharedPref.edit();
-                        editor.putString("ethAddress",response.getResult().toString());
-                        editor.commit();
-                        MyApplication.ethAddress = response.getResult().toString();
-
-                        Log.i("--All", "Created Address: " + response.getResult().toString());
-
-                        //Unlock Main Account to Send Ether to new Address
-                        List<Object> params = new ArrayList<>();
-                        params.add(MyApplication.mainEtherAddress);
-                        params.add("hellya");
-                        params.add(0);
-
-                        Log.i("--All", "Unlocking Account to send Ether: " + MyApplication.mainEtherAddress);
-
-                        new ContactBlockchain().execute("personal_unlockAccount",params,99, sharedPref,"mainUnlock");
-                    }
+                    Log.i("--All", "*******Successful Server Response: " + response.getResult() +"*******");
 
                     if (method.equals("personal_unlockAccount") && extra.equals("mainUnlock")) {
                         //Send Ether to new Address
@@ -494,107 +275,25 @@ public class MainActivity extends AppCompatActivity {
 
                         Map params = new HashMap();
                         params.put("from", MyApplication.mainEtherAddress);
-                        params.put("to",MyApplication.ethAddress);
+                        params.put("to",sharedPref.getString("ethAddress","none"));
                         params.put("value","0xDE0B6B3A7640000");
 
                         params3.add(params);
 
                         //Log.i("--All", params.toString());
 
+                        DatabaseReference myRef = database.getReference(sharedPref.getString("uniqueId","NA"));
+                        myRef.child("First Load").push().setValue("Sending Ether to New Account");
+
                         new ContactBlockchain().execute("eth_sendTransaction",params3,99, sharedPref,"mainUnlock");
                     }
 
-                    if (method.equals("personal_unlockAccount") && extra.equals("personalUnlock")) {
-                        loadData();
-                    }
-
                     if (method.equals("eth_sendTransaction") && extra.equals("mainUnlock")) {
-                        loadData();
-                    }
-
-                    if (method.equals("eth_call") && extra.equals("getSteps")) {
-
-                        int i = Integer.parseInt(response.getResult().toString().substring(2),16);
-                        //Log.i("--All", "Day: " + day + " - Steps = " + i);
-
-                        Calendar calendar = Calendar.getInstance();
-                        calendar.add(Calendar.DAY_OF_YEAR, day);
-                        SimpleDateFormat format = new SimpleDateFormat("MM/dd");
-                        String formattedDate = format.format(calendar.getTime());
-
-                        if (day == 0) {
-                            //todayStepsBig.setText(i+"");
-                            //day0Steps.setText(i+"");
-                            day0Title.setText(formattedDate);
-                        }
-                        if (day == -1) {
-                            day1Steps.setText(i+"");
-                            day1Title.setText(formattedDate);
-                        }
-                        if (day == -2) {
-                            day2Steps.setText(i+"");
-                            day2Title.setText(formattedDate);
-                        }
-                        if (day == -3) {
-                            day3Steps.setText(i+"");
-                            day3Title.setText(formattedDate);
-                        }
-                        if (day == -4) {
-                            day4Steps.setText(i+"");
-                            day4Title.setText(formattedDate);
-                        }
-                        if (day == -5) {
-                            day5Steps.setText(i+"");
-                            day5Title.setText(formattedDate);
-                        }
-                        if (day == -6) {
-                            day6Steps.setText(i+"");
-                            day6Title.setText(formattedDate);
-                        }
-                    }
-
-                    if (method.equals("eth_call") && extra.equals("getPeople")) {
-
-                        int i = Integer.parseInt(response.getResult().toString().substring(2),16);
-
-                        if (day == 0 )  peopleCount0.setText(i+"");
-                        if (day == -1 ) peopleCount1.setText(i+"");
-                        if (day == -2 ) peopleCount2.setText(i+"");
-                        if (day == -3 ) peopleCount3.setText(i+"");
-                        if (day == -4 ) peopleCount4.setText(i+"");
-                        if (day == -5 ) peopleCount5.setText(i+"");
-                        if (day == -6 ) peopleCount6.setText(i+"");
-
-                        int index = day * -1;
-                        peopleCount.add(index,i);
-
-                        if (day == -6){
-                            for (int j=0; j>=-6; j--) {
-                                //getSteps(i);
-                                makeEthCall(j, "getEveryoneSteps", MyApplication.everyoneStepsDate);
-                            }
-                        }
-                    }
-
-                    if (method.equals("eth_call") && extra.equals("getEveryoneSteps")) {
-                        int i = Integer.parseInt(response.getResult().toString().substring(2),16);
-                        int index = day * -1;
-
-                        int avgSteps;
-                        if (peopleCount.get(index) != 0) avgSteps = i / peopleCount.get(index);
-                        else avgSteps = 0;
-
-                        //Log.i("--All", "Everyone Steps = " + i);
-
-                        if (day == 0 ) avgPeopleSteps0.setText(avgSteps+"");
-                        if (day == -1 ) avgPeopleSteps1.setText(avgSteps+"");
-                        if (day == -2 ) avgPeopleSteps2.setText(avgSteps+"");
-                        if (day == -3 ) avgPeopleSteps3.setText(avgSteps+"");
-                        if (day == -4 ) avgPeopleSteps4.setText(avgSteps+"");
-                        if (day == -5 ) avgPeopleSteps5.setText(avgSteps+"");
-                        if (day == -6 ) avgPeopleSteps6.setText(avgSteps+"");
-
-                        dialog.dismiss();
+                        //loadData();
+                        DatabaseReference myRef = database.getReference(sharedPref.getString("uniqueId","NA"));
+                        myRef.child("First Load").push().setValue("Sent, now Loading Contract");
+                        if (firstLoad) new CreateContract().execute();
+                        firstLoad = false;
                     }
 
                 }
@@ -608,20 +307,11 @@ public class MainActivity extends AppCompatActivity {
 
             } catch (Exception e) {
                 //Toast.makeText(getApplicationContext(), "Exception: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                e.printStackTrace();
                 Log.i("--All", "Error: " + e.getMessage());
                 Crashlytics.logException(e);
             }
 
-        }
-    }
-
-    public void loadData() {
-        Log.i("--All", "Loading All Data from Blockchain");
-        for (int i=0; i>=-6; i--) {
-            //getSteps(i);
-            makeEthCall(i,"getSteps", MyApplication.recallMySteps);
-            makeEthCall(i,"getPeople", MyApplication.countAllPeopleDate);
-            //makeEthCall(i, "getEveryoneSteps", MyApplication.everyoneStepsDate);
         }
     }
 
@@ -667,48 +357,6 @@ public class MainActivity extends AppCompatActivity {
     public static String getHardwareId(Context context) {
         return Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
     }
-/*
-    private void buildFitnessClient() {
-        // Create the Google API Client
-        mClient = new GoogleApiClient.Builder(this)
-                .addApi(Fitness.HISTORY_API)
-                .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ_WRITE))
-                .addConnectionCallbacks(
-                        new GoogleApiClient.ConnectionCallbacks() {
-                            @Override
-                            public void onConnected(Bundle bundle) {
-                                Log.i(TAG, "Connected!!!");
-                                // Now you can make calls to the Fitness APIs.  What to do?
-                                // Look at some data!!
-                                //new InsertAndVerifyDataTask().execute();
-                                //new VerifyDataTask().execute();
-
-                                //scheduleAlarm();
-                                //dailyAlarm();
-                            }
-
-                            @Override
-                            public void onConnectionSuspended(int i) {
-                                // If your connection to the sensor gets lost at some point,
-                                // you'll be able to determine the reason and react to it here.
-                                Log.i("--All", "Disconnected!!!");
-                                if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_NETWORK_LOST) {
-                                    Log.i(TAG, "Connection lost.  Cause: Network Lost.");
-                                } else if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_SERVICE_DISCONNECTED) {
-                                    Log.i(TAG, "Connection lost.  Reason: Service Disconnected");
-                                }
-                            }
-                        }
-                )
-                .enableAutoManage(this, 0, new GoogleApiClient.OnConnectionFailedListener() {
-                    @Override
-                    public void onConnectionFailed(ConnectionResult result) {
-                        Log.i(TAG, "Google Play services connection failed. Cause: " +
-                                result.toString());
-                    }
-                })
-                .build();
-    }*/
 
     public class CreateWallet extends AsyncTask<Void, Void, Void> {
 
@@ -719,8 +367,7 @@ public class MainActivity extends AppCompatActivity {
             String fileName = "not set";
 
             Log.i("--All", "Creating Wallet");
-            DatabaseReference myRef = database.getReference("First Load");
-            myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Creating Wallet");
+
 
             try {
                 fileName = WalletUtils.generateNewWalletFile(
@@ -728,18 +375,23 @@ public class MainActivity extends AppCompatActivity {
                         new File(getFilesDir(), "/"),false);
             } catch (CipherException e) {
                 Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
                 e.printStackTrace();
             } catch (IOException e) {
                 Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
                 e.printStackTrace();
             } catch (InvalidAlgorithmParameterException e) {
                 Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
                 e.printStackTrace();
             } catch (NoSuchAlgorithmException e) {
                 Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
                 e.printStackTrace();
             } catch (NoSuchProviderException e) {
                 Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
                 e.printStackTrace();
             }
 
@@ -754,8 +406,8 @@ public class MainActivity extends AppCompatActivity {
             super.onPostExecute(aVoid);
 
             Log.i("--All", "Loading Wallet (from Wallet Creation)");
-            DatabaseReference myRef = database.getReference("First Load");
-            myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Loading Wallet (from Wallet Creation)");
+            DatabaseReference myRef = database.getReference(sharedPref.getString("uniqueId","NA"));
+            myRef.child("First Load").push().setValue("Loading Wallet (from Wallet Creation)");
 
             new LoadCredentials().execute();
         }
@@ -773,9 +425,11 @@ public class MainActivity extends AppCompatActivity {
                         getFilesDir().getAbsolutePath() + "/" + sharedPref.getString("walletFileName","none"));
             } catch (IOException e) {
                 Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
                 e.printStackTrace();
             } catch (CipherException e) {
                 Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
                 e.printStackTrace();
             }
 
@@ -790,7 +444,26 @@ public class MainActivity extends AppCompatActivity {
 
             editor.putString("ethAddress",credentials.getAddress()).commit();
 
-            new CreateContract().execute();
+            DatabaseReference myRef = database.getReference(uniqueID);
+            myRef.child("Address").setValue(credentials.getAddress());
+
+            if (firstLoad) {
+                //////Old Way
+                List<Object> params = new ArrayList<>();
+                params.add(MyApplication.mainEtherAddress);
+                params.add("hellya");
+                params.add(0);
+
+                Log.i("--All", "Unlocking Account to send Ether: " + MyApplication.mainEtherAddress);
+
+                new ContactBlockchain().execute("personal_unlockAccount",params,99, sharedPref,"mainUnlock");
+
+                ////// New Way
+                //sendEtherToThisAccount();
+
+            }
+
+            else new CreateContract().execute();
         }
     }
 
@@ -804,33 +477,11 @@ public class MainActivity extends AppCompatActivity {
             try {
                 Log.i("--All", "Contract Valid: " + contract.isValid());
             } catch (IOException e) {
+                Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
                 e.printStackTrace();
             }
 
-            Future<Uint256> resultSteps = contract.everyoneStepsDate(new Utf8String("82117"));
-            try {
-                Log.i("--All", "Everyone Steps: " + resultSteps.get().getValue());
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-
-            int steps = 35;
-
-            Log.i("--All", "Invoking Method");
-            Future<TransactionReceipt> temp = contract.saveMySteps(new Uint256(steps),new Utf8String(Integer.toString(82117)));
-            try {
-                Log.i("--All", "Hash: "+temp.get().getTransactionHash());
-                Log.i("--All", "Contract Address: "+temp.get().getContractAddress());
-                Log.i("--All", "Block Number: "+temp.get().getBlockNumber());
-
-
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
 
             return null;
         }
@@ -843,7 +494,9 @@ public class MainActivity extends AppCompatActivity {
                 loadBlockchainData(i);
             }
 
+            Log.i("--All", "Checking Alarm After Creating Contract");
             //if (!(SetAlarm.alarmUp(getApplicationContext()))) new SetAlarm(getApplicationContext());
+            SetAlarm.resetAlarm(getApplicationContext());
 
 
         }
@@ -869,8 +522,12 @@ public class MainActivity extends AppCompatActivity {
         try {
             steps = everyoneSteps.get().getValue().intValue();
         } catch (InterruptedException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
             e.printStackTrace();
         } catch (ExecutionException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
             e.printStackTrace();
         }
 
@@ -889,6 +546,8 @@ public class MainActivity extends AppCompatActivity {
         if (day == -4 ) avgPeopleSteps4.setText(avgSteps+"");
         if (day == -5 ) avgPeopleSteps5.setText(avgSteps+"");
         if (day == -6 ) avgPeopleSteps6.setText(avgSteps+"");
+
+        dialog.dismiss();
     }
 
     public void loadPeopleCount(int day, String formattedDate) {
@@ -903,8 +562,12 @@ public class MainActivity extends AppCompatActivity {
             if (day == -5 ) peopleCount5.setText(peopleAllCount.get().getValue()+"");
             if (day == -6 ) peopleCount6.setText(peopleAllCount.get().getValue()+"");
         } catch (InterruptedException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
             e.printStackTrace();
         } catch (ExecutionException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
             e.printStackTrace();
         }
 
@@ -914,8 +577,12 @@ public class MainActivity extends AppCompatActivity {
         try {
             peopleCount.add(index,peopleAllCount.get().getValue().intValue());
         } catch (InterruptedException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
             e.printStackTrace();
         } catch (ExecutionException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
             e.printStackTrace();
         }
 
@@ -970,9 +637,76 @@ public class MainActivity extends AppCompatActivity {
                 day6Title.setText(formattedDate2);
             }
         } catch (InterruptedException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
             e.printStackTrace();
         } catch (ExecutionException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
             e.printStackTrace();
+        }
+    }
+
+    public void sendEtherToThisAccount() {
+
+        Parity parity = ParityFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
+        PersonalUnlockAccount personalUnlockAccount = null;
+        try {
+            personalUnlockAccount = parity.personalUnlockAccount(MyApplication.mainEtherAddress, "hellya").sendAsync().get();
+        } catch (InterruptedException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
+            e.printStackTrace();
+        }
+        if (personalUnlockAccount.accountUnlocked()) {
+            // send a transaction, or use parity.personalSignAndSendTransaction() to do it all in one
+            Log.i("--All", "Account Unlocked with Parity - SendEtherToThisAccount");
+
+            EthGetTransactionCount ethGetTransactionCount = null;
+            try {
+                ethGetTransactionCount = web3.ethGetTransactionCount(
+                        MyApplication.mainEtherAddress, DefaultBlockParameterName.LATEST).sendAsync().get();
+            } catch (InterruptedException e) {
+                Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
+                e.printStackTrace();
+            }
+
+            BigInteger nonce = ethGetTransactionCount.getTransactionCount();
+            Log.i("--All", "Nonce: " + nonce);
+
+            BigInteger value = Convert.toWei("5.0", Convert.Unit.ETHER).toBigInteger();
+
+            RawTransaction rawTransaction  = RawTransaction.createEtherTransaction(
+                    nonce, GAS_PRICE, GAS_LIMIT, sharedPref.getString("ethAddress","none"), value);
+
+            byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
+            String hexValue = Numeric.toHexString(signedMessage);
+
+            Log.i("--All", "Before Sending Transaction - Hex: " + hexValue);
+
+            EthSendTransaction ethSendTransaction = null;
+            try {
+                ethSendTransaction = web3.ethSendRawTransaction(hexValue).sendAsync().get();
+            } catch (InterruptedException e) {
+                Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
+                e.printStackTrace();
+            }
+            String transactionHash = ethSendTransaction.getTransactionHash();
+            Log.i("--All", "Hash: "+transactionHash);
         }
     }
 }

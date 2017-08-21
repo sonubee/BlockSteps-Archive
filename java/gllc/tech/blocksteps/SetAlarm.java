@@ -20,7 +20,7 @@ public class SetAlarm {
         //dailyAlarm(context);
     }
 
-    public void scheduleAlarm(Context context) {
+    public static void scheduleAlarm(Context context) {
         // Construct an intent that will execute the AlarmReceiver
         Intent intent = new Intent(context, MyAlarmReceiver.class);
         intent.setAction(MyAlarmReceiver.ACTION_ALARM_RECEIVER);//my custom string action name
@@ -32,10 +32,10 @@ public class SetAlarm {
         AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         // First parameter is the type: ELAPSED_REALTIME, ELAPSED_REALTIME_WAKEUP, RTC_WAKEUP
         // Interval can be INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR, INTERVAL_DAY
-        //Log.i("--All", "Hourly Interval Alarm Set");
-        //alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, AlarmManager.INTERVAL_HOUR, pIntent);
-        Log.i("--All", "Minute and Half Alarm Set - SetAlarm");
-        alarm.setRepeating(AlarmManager.RTC, firstMillis, 1000 * 60, pIntent);
+        Log.i("--All", "Hourly Interval Alarm Set");
+        alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, AlarmManager.INTERVAL_HOUR, pIntent);
+        //Log.i("--All", "Minute and Half Alarm Set - SetAlarm");
+        //alarm.setRepeating(AlarmManager.RTC, firstMillis, 1000 * 60, pIntent);
     }
 
     public void dailyAlarm(Context context) {
@@ -69,5 +69,23 @@ public class SetAlarm {
         Log.i("--All", "alarm is " + (isWorking ? "" : "not") + " working... from SetAlarm");
         //Toast.makeText(context, "Alarm:" + isWorking, Toast.LENGTH_SHORT).show();
         return isWorking;
+    }
+
+    public static void cancelAlarm(Context context) {
+        Intent intent = new Intent(context, MyAlarmReceiver.class);
+        intent.setAction(MyAlarmReceiver.ACTION_ALARM_RECEIVER);//my custom string action name
+        final PendingIntent pIntent = PendingIntent.getBroadcast(context, MyAlarmReceiver.REQUEST_CODE,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        AlarmManager alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
+        alarmMgr.cancel(pIntent);
+
+        Log.i("--All", "Alarm Canceled");
+    }
+
+    public static void resetAlarm(Context context) {
+        cancelAlarm(context);
+        scheduleAlarm(context);
     }
 }

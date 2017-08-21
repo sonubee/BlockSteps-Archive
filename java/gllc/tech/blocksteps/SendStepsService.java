@@ -107,7 +107,7 @@ public class SendStepsService extends IntentService {
         int steps = sharedPref.getInt("steps",0);
         int lastSteps = sharedPref.getInt("lastSteps",0);
 
-        //if (steps != lastSteps) {
+        if (steps != lastSteps) {
             //sendSteps(steps, lastDate);
             sendSteps2(steps, lastDate);
 
@@ -121,7 +121,7 @@ public class SendStepsService extends IntentService {
             DatabaseReference myRef = database.getReference(id);
 
             myRef.child("SentSteps").push().setValue(sentSteps);
-        //}
+        }
 
         //Log.i("--All", "Last Date: " + lastDate);
         //Log.i("--All", "Current Date: " + currentDate);
@@ -135,8 +135,8 @@ public class SendStepsService extends IntentService {
     }
 
     public void sendSteps2(int steps,int date) {
-/*
-        steps = 35;
+
+        //steps = 85;
 
             Log.i("--All", "Invoking Method");
             Future<TransactionReceipt> temp = MainActivity.contract.saveMySteps(new Uint256(steps),new Utf8String(Integer.toString(date)));
@@ -148,10 +148,14 @@ public class SendStepsService extends IntentService {
 
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
             } catch (ExecutionException e) {
                 e.printStackTrace();
+                Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
             }
-*/
+
     }
 
     public String getTimeStamp() {
@@ -281,6 +285,7 @@ public class SendStepsService extends IntentService {
 
             } catch (Exception e) {
                 //Toast.makeText(getApplicationContext(), "Exception: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                Log.i("--All", "Error: " + e.getMessage());
                 Crashlytics.logException(e);
 
             }
