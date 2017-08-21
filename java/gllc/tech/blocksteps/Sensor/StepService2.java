@@ -174,6 +174,6 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
         LocalBroadcastManager.getInstance(this).sendBroadcast(in);
 
         Log.i("--All", "Checking Alarm From StepService2");
-        if (!(SetAlarm.alarmUp(getApplicationContext()))) new SetAlarm(getApplicationContext());
+        //if (!(SetAlarm.alarmUp(getApplicationContext()))) new SetAlarm(getApplicationContext());
     }
 }
