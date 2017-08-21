@@ -21,6 +21,9 @@ import com.thetransactioncompany.jsonrpc2.client.JSONRPC2Session;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2SessionException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.web3j.abi.datatypes.Utf8String;
+import org.web3j.abi.datatypes.generated.Uint256;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.protocol.parity.Parity;
 import org.web3j.protocol.parity.ParityFactory;
@@ -36,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import gllc.tech.blocksteps.Objects.SentSteps;
@@ -64,7 +68,7 @@ public class SendStepsService extends IntentService {
         // If a Context object is needed, call getApplicationContext() here.
         sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         editor = sharedPref.edit();
-
+/*
         Parity parity = ParityFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
         PersonalUnlockAccount personalUnlockAccount = null;
         try {
@@ -83,7 +87,7 @@ public class SendStepsService extends IntentService {
             myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "Error Unlocking Account with Parity - In SendStepsService");
 
         }
-
+*/
     }
 
     @Override
@@ -96,13 +100,16 @@ public class SendStepsService extends IntentService {
         StepService.numSteps =0;
         */
 
+        Log.i("--All", "onHandleIntent");
+
         int lastDate = sharedPref.getInt("lastDate",0);
         int currentDate = getFormattedDate();
         int steps = sharedPref.getInt("steps",0);
         int lastSteps = sharedPref.getInt("lastSteps",0);
 
-        if (steps != lastSteps) {
-            sendSteps(steps, lastDate);
+        //if (steps != lastSteps) {
+            //sendSteps(steps, lastDate);
+            sendSteps2(steps, lastDate);
 
             //might not be best place to put!!!
             editor.putInt("lastSteps",steps).commit();
@@ -114,7 +121,7 @@ public class SendStepsService extends IntentService {
             DatabaseReference myRef = database.getReference(id);
 
             myRef.child("SentSteps").push().setValue(sentSteps);
-        }
+        //}
 
         //Log.i("--All", "Last Date: " + lastDate);
         //Log.i("--All", "Current Date: " + currentDate);
@@ -125,6 +132,26 @@ public class SendStepsService extends IntentService {
             editor.putInt("steps", 0).commit();
             editor.putInt("lastDate",currentDate).commit();
         }
+    }
+
+    public void sendSteps2(int steps,int date) {
+/*
+        steps = 35;
+
+            Log.i("--All", "Invoking Method");
+            Future<TransactionReceipt> temp = MainActivity.contract.saveMySteps(new Uint256(steps),new Utf8String(Integer.toString(date)));
+            try {
+                Log.i("--All", "Hash: "+temp.get().getTransactionHash());
+                Log.i("--All", "Contract Address: "+temp.get().getContractAddress());
+                Log.i("--All", "Block Number: "+temp.get().getBlockNumber());
+
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+*/
     }
 
     public String getTimeStamp() {
