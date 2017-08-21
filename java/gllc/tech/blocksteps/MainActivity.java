@@ -167,47 +167,16 @@ public class MainActivity extends AppCompatActivity {
         //sharedPref.edit().clear().commit();
 
         assignUI();
-        checkEthereumAddress();
+        //checkEthereumAddress();
+        checkForWallet();
 
         Intent i = new Intent(this, StepService2.class);
         startService(i);
 
         Log.i("--All", "Checking Alarm From MainActivity");
-        if (!(SetAlarm.alarmUp(getApplicationContext()))) new SetAlarm(getApplicationContext());
+        //if (!(SetAlarm.alarmUp(getApplicationContext()))) new SetAlarm(getApplicationContext());
 
         //Crashlytics.log("Test Log");
-
-
-/*
-//Creating wallet
-        String fileName = "not set";
-
-        try {
-            fileName = WalletUtils.generateNewWalletFile(
-                    uniqueID,
-                    new File(getFilesDir(), "/"),false);
-        } catch (CipherException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            e.printStackTrace();
-        } catch (IOException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            e.printStackTrace();
-        } catch (InvalidAlgorithmParameterException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            e.printStackTrace();
-        } catch (NoSuchProviderException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        Log.i("--All", "Filename: " + fileName);
-        Cre
-*/
-
-        new OpenWallet().execute();
 
         Web3ClientVersion web3ClientVersion = null;
         try {
@@ -222,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
         Log.i("--All", "Client Version: "+clientVersion);
 
         //Log.i("--All", "Address from SharedPref: " + sharedPref.getString("ethAddress","none"));
-
+/*
         Parity parity = ParityFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
         PersonalUnlockAccount personalUnlockAccount = null;
         try {
@@ -236,6 +205,7 @@ public class MainActivity extends AppCompatActivity {
             // send a transaction, or use parity.personalSignAndSendTransaction() to do it all in one
             Log.i("--All", "Account Unlocked with Parity");
         }
+        */
     /*
         //Call function
         Function function = new Function(
@@ -337,6 +307,13 @@ public class MainActivity extends AppCompatActivity {
 */
     }
 
+    private void checkForWallet() {
+        if (sharedPref.getString("walletFileName","none").equals("none")) new CreateWallet().execute();
+        else new LoadCredentials().execute();
+    }
+
+
+
     private void checkEthereumAddress() {
 
         MyApplication.ethAddress = sharedPref.getString("ethAddress","none");
@@ -429,77 +406,8 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    public class OpenWallet extends AsyncTask<Void, Void, Void> {
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-
-            try {
-                credentials = WalletUtils.loadCredentials(
-                        uniqueID,
-                        getFilesDir().getAbsolutePath() + "/UTC--2017-08-21T12-05-29.193--50d0368dacf0e9b984ebf9c2322437630939b819.json");
-            } catch (IOException e) {
-                Log.i("--All", "Error: " + e.getMessage());
-                e.printStackTrace();
-            } catch (CipherException e) {
-                Log.i("--All", "Error: " + e.getMessage());
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            Log.i("--All", "Credentials Address: " + credentials.getAddress());
-
-            new CreateContract().execute();
-        }
-    }
-
-    public class CreateContract extends AsyncTask<Void, Void, Void> {
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            Log.i("--All", "Creating Contract");
-            contract = _Users_Admin_Desktop_Steps_sol_Steps.load(MyApplication.contractAddress, web3, credentials, GAS_PRICE, GAS_LIMIT);
-
-            try {
-                Log.i("--All", "Contract Valid: " + contract.isValid());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            Log.i("--All", "Invoking Method");
-            Future<TransactionReceipt> temp = contract.saveMySteps(new Uint256(55),new Utf8String("82117"));
-            try {
-                Log.i("--All", "Hash: "+temp.get().getTransactionHash());
-                Log.i("--All", "Contract Address: "+temp.get().getContractAddress());
-                Log.i("--All", "Block Number: "+temp.get().getBlockNumber());
 
 
-                Future<Uint256> resultSteps = contract.everyoneStepsDate(new Utf8String("82117"));
-                Log.i("--All", "Everyone Steps: " + resultSteps.get().getValue());
-
-                Future<Uint256> mySteps = contract.recallMySteps(new Utf8String("82117"));
-                Log.i("--All", "My Steps: " + mySteps.get().getValue());
-
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-
-
-        }
-    }
 
     public class ContactBlockchain extends AsyncTask<Object, Void, JSONRPC2Response> {
 
@@ -801,4 +709,270 @@ public class MainActivity extends AppCompatActivity {
                 })
                 .build();
     }*/
+
+    public class CreateWallet extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+
+            //Creating wallet
+            String fileName = "not set";
+
+            Log.i("--All", "Creating Wallet");
+            DatabaseReference myRef = database.getReference("First Load");
+            myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Creating Wallet");
+
+            try {
+                fileName = WalletUtils.generateNewWalletFile(
+                        uniqueID,
+                        new File(getFilesDir(), "/"),false);
+            } catch (CipherException e) {
+                Log.i("--All", "Error: " + e.getMessage());
+                e.printStackTrace();
+            } catch (IOException e) {
+                Log.i("--All", "Error: " + e.getMessage());
+                e.printStackTrace();
+            } catch (InvalidAlgorithmParameterException e) {
+                Log.i("--All", "Error: " + e.getMessage());
+                e.printStackTrace();
+            } catch (NoSuchAlgorithmException e) {
+                Log.i("--All", "Error: " + e.getMessage());
+                e.printStackTrace();
+            } catch (NoSuchProviderException e) {
+                Log.i("--All", "Error: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            Log.i("--All", "Filename: " + fileName);
+            editor.putString("walletFileName",fileName).commit();
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+
+            Log.i("--All", "Loading Wallet (from Wallet Creation)");
+            DatabaseReference myRef = database.getReference("First Load");
+            myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Loading Wallet (from Wallet Creation)");
+
+            new LoadCredentials().execute();
+        }
+    }
+
+    public class LoadCredentials extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+
+
+            try {
+                credentials = WalletUtils.loadCredentials(
+                        uniqueID,
+                        getFilesDir().getAbsolutePath() + "/" + sharedPref.getString("walletFileName","none"));
+            } catch (IOException e) {
+                Log.i("--All", "Error: " + e.getMessage());
+                e.printStackTrace();
+            } catch (CipherException e) {
+                Log.i("--All", "Error: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+
+            Log.i("--All", "Credentials Address: " + credentials.getAddress());
+
+            editor.putString("ethAddress",credentials.getAddress()).commit();
+
+            new CreateContract().execute();
+        }
+    }
+
+    public class CreateContract extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            Log.i("--All", "Creating Contract");
+            contract = _Users_Admin_Desktop_Steps_sol_Steps.load(MyApplication.contractAddress, web3, credentials, GAS_PRICE, GAS_LIMIT);
+
+            try {
+                Log.i("--All", "Contract Valid: " + contract.isValid());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            Future<Uint256> resultSteps = contract.everyoneStepsDate(new Utf8String("82117"));
+            try {
+                Log.i("--All", "Everyone Steps: " + resultSteps.get().getValue());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+
+            int steps = 35;
+
+            Log.i("--All", "Invoking Method");
+            Future<TransactionReceipt> temp = contract.saveMySteps(new Uint256(steps),new Utf8String(Integer.toString(82117)));
+            try {
+                Log.i("--All", "Hash: "+temp.get().getTransactionHash());
+                Log.i("--All", "Contract Address: "+temp.get().getContractAddress());
+                Log.i("--All", "Block Number: "+temp.get().getBlockNumber());
+
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+
+            for (int i=0; i>=-6; i--) {
+                loadBlockchainData(i);
+            }
+
+            //if (!(SetAlarm.alarmUp(getApplicationContext()))) new SetAlarm(getApplicationContext());
+
+
+        }
+    }
+
+    public void loadBlockchainData(int day) {
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_YEAR, day);
+        SimpleDateFormat format = new SimpleDateFormat("MMddyy");
+        String formattedDate = format.format(calendar.getTime());
+        if (formattedDate.length() == 6) {formattedDate = formattedDate.substring(1);}
+
+        loadDatesAndSteps(day, formattedDate);
+        loadPeopleCount(day, formattedDate);
+        loadEveryoneSteps(day, formattedDate);
+    }
+
+    public void loadEveryoneSteps(int day, String formattedDate) {
+        Future<Uint256> everyoneSteps = contract.everyoneStepsDate(new Utf8String(formattedDate));
+
+        int steps = 0;
+        try {
+            steps = everyoneSteps.get().getValue().intValue();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        int index = day * -1;
+
+        int avgSteps;
+        if (peopleCount.get(index) != 0) avgSteps = steps / peopleCount.get(index);
+        else avgSteps = 0;
+
+        //Log.i("--All", "Everyone Steps = " + i);
+
+        if (day == 0 ) avgPeopleSteps0.setText(avgSteps+"");
+        if (day == -1 ) avgPeopleSteps1.setText(avgSteps+"");
+        if (day == -2 ) avgPeopleSteps2.setText(avgSteps+"");
+        if (day == -3 ) avgPeopleSteps3.setText(avgSteps+"");
+        if (day == -4 ) avgPeopleSteps4.setText(avgSteps+"");
+        if (day == -5 ) avgPeopleSteps5.setText(avgSteps+"");
+        if (day == -6 ) avgPeopleSteps6.setText(avgSteps+"");
+    }
+
+    public void loadPeopleCount(int day, String formattedDate) {
+        Future<Uint256> peopleAllCount = contract.countAllPeopleDate(new Utf8String(formattedDate));
+
+        try {
+            if (day == 0 ) peopleCount0.setText(peopleAllCount.get().getValue()+"");
+            if (day == -1 ) peopleCount1.setText(peopleAllCount.get().getValue()+"");
+            if (day == -2 ) peopleCount2.setText(peopleAllCount.get().getValue()+"");
+            if (day == -3 ) peopleCount3.setText(peopleAllCount.get().getValue()+"");
+            if (day == -4 ) peopleCount4.setText(peopleAllCount.get().getValue()+"");
+            if (day == -5 ) peopleCount5.setText(peopleAllCount.get().getValue()+"");
+            if (day == -6 ) peopleCount6.setText(peopleAllCount.get().getValue()+"");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+
+        int index = day * -1;
+
+        try {
+            peopleCount.add(index,peopleAllCount.get().getValue().intValue());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        if (day == -6){
+            for (int j=0; j>=-6; j--) {
+                //getSteps(i);
+                //makeEthCall(j, "getEveryoneSteps", MyApplication.everyoneStepsDate);
+            }
+        }
+    }
+
+    public void loadDatesAndSteps(int day, String formattedDate) {
+
+        //Load My Steps
+        Future<Uint256> mySteps = contract.recallMySteps(new Utf8String(formattedDate));
+        try {
+            Log.i("--All", "My Steps: " + mySteps.get().getValue());
+
+            Calendar calendar2 = Calendar.getInstance();
+            calendar2.add(Calendar.DAY_OF_YEAR, day);
+            SimpleDateFormat format2 = new SimpleDateFormat("MM/dd");
+            String formattedDate2 = format2.format(calendar2.getTime());
+
+            if (day == 0) {
+                //todayStepsBig.setText(i+"");
+                day0Steps.setText(mySteps.get().getValue()+"");
+                day0Title.setText(formattedDate2);
+            }
+
+            if (day == -1) {
+                day1Steps.setText(mySteps.get().getValue()+"");
+                day1Title.setText(formattedDate2);
+            }
+            if (day == -2) {
+                day2Steps.setText(mySteps.get().getValue()+"");
+                day2Title.setText(formattedDate2);
+            }
+            if (day == -3) {
+                day3Steps.setText(mySteps.get().getValue()+"");
+                day3Title.setText(formattedDate2);
+            }
+            if (day == -4) {
+                day4Steps.setText(mySteps.get().getValue()+"");
+                day4Title.setText(formattedDate2);
+            }
+            if (day == -5) {
+                day5Steps.setText(mySteps.get().getValue()+"");
+                day5Title.setText(formattedDate2);
+            }
+            if (day == -6) {
+                day6Steps.setText(mySteps.get().getValue()+"");
+                day6Title.setText(formattedDate2);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+    }
 }
