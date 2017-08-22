@@ -34,8 +34,8 @@ public class SetAlarm {
         // Interval can be INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR, INTERVAL_DAY
         Log.i("--All", "Hourly Interval Alarm Set");
         alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, firstMillis, AlarmManager.INTERVAL_HOUR, pIntent);
-        //Log.i("--All", "Minute and Half Alarm Set - SetAlarm");
-        //alarm.setRepeating(AlarmManager.RTC, firstMillis, 1000 * 60, pIntent);
+        //Log.i("--All", "Minute Alarm Set - SetAlarm");
+        //alarm.setRepeating(AlarmManager.RTC, firstMillis, 10000 * 60, pIntent);
     }
 
     public void dailyAlarm(Context context) {

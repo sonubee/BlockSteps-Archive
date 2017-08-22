@@ -13,6 +13,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
@@ -45,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 import gllc.tech.blocksteps.Objects.SentSteps;
 import gllc.tech.blocksteps.Sensor.StepService;
 import gllc.tech.blocksteps.Sensor.StepService2;
+import io.fabric.sdk.android.Fabric;
 
 /**
  * Created by bhangoo on 7/28/2017.
@@ -68,26 +70,8 @@ public class SendStepsService extends IntentService {
         // If a Context object is needed, call getApplicationContext() here.
         sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         editor = sharedPref.edit();
-/*
-        Parity parity = ParityFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
-        PersonalUnlockAccount personalUnlockAccount = null;
-        try {
-            personalUnlockAccount = parity.personalUnlockAccount(sharedPref.getString("ethAddress","none"), sharedPref.getString("uniqueId","none")).sendAsync().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        if (personalUnlockAccount.accountUnlocked()) {
-            // send a transaction, or use parity.personalSignAndSendTransaction() to do it all in one
-            Log.i("--All", "Account Unlocked with Parity");
-        } else {
-            Log.i("--All", "Error Unlocking Account with Parity");
-            DatabaseReference myRef = database.getReference("Error");
-            myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "Error Unlocking Account with Parity - In SendStepsService");
-
-        }
-*/
+        FirebaseApp.initializeApp(this);
+        Fabric.with(this, new Crashlytics());
     }
 
     @Override
@@ -100,7 +84,10 @@ public class SendStepsService extends IntentService {
         StepService.numSteps =0;
         */
 
-        Log.i("--All", "onHandleIntent");
+        Log.i("--All", "onHandleIntent - Send Steps Service");
+
+        DatabaseReference myRef2 = database.getReference(sharedPref.getString("uniqueId","NA"));
+        myRef2.child("Alarm-SendStepsService").push().setValue(SendStepsService.getTimeStamp());
 
         int lastDate = sharedPref.getInt("lastDate",0);
         int currentDate = getFormattedDate();
@@ -115,11 +102,9 @@ public class SendStepsService extends IntentService {
             editor.putInt("lastSteps",steps).commit();
 
             Log.i("--All", "Sending to Firebase");
-            String id = sharedPref.getString("uniqueId","NA");
-            SentSteps sentSteps = new SentSteps(getTimeStamp(), steps, id);
+            SentSteps sentSteps = new SentSteps(getTimeStamp(), steps, sharedPref.getString("uniqueId","NA"));
 
-            DatabaseReference myRef = database.getReference(id);
-
+            DatabaseReference myRef = database.getReference(sharedPref.getString("uniqueId","NA"));
             myRef.child("SentSteps").push().setValue(sentSteps);
         }
 
@@ -131,6 +116,8 @@ public class SendStepsService extends IntentService {
             StepService2.numSteps =0;
             editor.putInt("steps", 0).commit();
             editor.putInt("lastDate",currentDate).commit();
+
+            SetAlarm.resetAlarm(getApplicationContext());
         }
     }
 
@@ -139,8 +126,10 @@ public class SendStepsService extends IntentService {
         //steps = 85;
 
             Log.i("--All", "Invoking Method");
-            Future<TransactionReceipt> temp = MainActivity.contract.saveMySteps(new Uint256(steps),new Utf8String(Integer.toString(date)));
+
+            Future<TransactionReceipt> temp;
             try {
+                temp = MainActivity.contract.saveMySteps(new Uint256(steps),new Utf8String(Integer.toString(date)));
                 Log.i("--All", "Hash: "+temp.get().getTransactionHash());
                 Log.i("--All", "Contract Address: "+temp.get().getContractAddress());
                 Log.i("--All", "Block Number: "+temp.get().getBlockNumber());
@@ -158,7 +147,7 @@ public class SendStepsService extends IntentService {
 
     }
 
-    public String getTimeStamp() {
+    public static String getTimeStamp() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_YEAR, 0);
         SimpleDateFormat format = new SimpleDateFormat("HH:mm - MM/dd/yy");

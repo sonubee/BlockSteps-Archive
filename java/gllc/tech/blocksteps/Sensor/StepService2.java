@@ -24,7 +24,11 @@ import android.support.v4.content.WakefulBroadcastReceiver;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
+import com.google.firebase.FirebaseApp;
+
 import gllc.tech.blocksteps.SetAlarm;
+import io.fabric.sdk.android.Fabric;
 
 /**
  * Created by bhangoo on 7/30/2017.
@@ -49,7 +53,8 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
     public void onCreate() {
         super.onCreate(); // if you override onCreate(), make sure to call super().
         // If a Context object is needed, call getApplicationContext() here.
-        Log.i("--All", "onCreate StepService2");
+        FirebaseApp.initializeApp(this);
+        Fabric.with(this, new Crashlytics());
         sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         editor = sharedPref.edit();
 
@@ -69,9 +74,23 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
         mServiceHandler = new ServiceHandler(mServiceLooper);
     }
 
+    // Handler that receives messages from the thread
+    private final class ServiceHandler extends Handler {
+
+        public ServiceHandler(Looper looper) {
+            super(looper);
+            Log.i("--All", "StepService2 ServiceHandler");
+        }
+        @Override
+        public void handleMessage(Message msg) {
+            Log.i("--All", "StepService2 - Handle Message inside ServiceHandler");
+            // Normally we would do some work here, like download a file.
+        }
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i("--All", "onStartCommand");
+        Log.i("--All", "StepService2 onStartCommand");
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
         Message msg = mServiceHandler.obtainMessage();
@@ -88,22 +107,10 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
         // Fire the broadcast with intent packaged
         LocalBroadcastManager.getInstance(this).sendBroadcast(in);
 
+        SetAlarm.resetAlarm(getApplicationContext());
+
         // If we get killed, after returning from here, restart
         return START_STICKY;
-    }
-
-// Handler that receives messages from the thread
-    private final class ServiceHandler extends Handler {
-
-        public ServiceHandler(Looper looper) {
-            super(looper);
-            Log.i("--All", "ServiceHandler");
-        }
-        @Override
-        public void handleMessage(Message msg) {
-            Log.i("--All", "Handle Message");
-            // Normally we would do some work here, like download a file.
-        }
     }
 
     public class PhoneUnlockedReceiver extends BroadcastReceiver {
@@ -130,7 +137,7 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.i("--All", "On Destroy");
+        Log.i("--All", "StepService2 On Destroy");
         sensorManager.unregisterListener(this);
         sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_FASTEST);
 
@@ -144,7 +151,7 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        Log.i("--All", "onBind");
+        Log.i("--All", "StepService2 onBind");
         return null;
     }
 
@@ -177,3 +184,8 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
         if (!(SetAlarm.alarmUp(getApplicationContext()))) new SetAlarm(getApplicationContext());
     }
 }
+
+//onCreate
+//ServiceHandler
+//onStartCommand
+//Handle Message

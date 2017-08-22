@@ -1,39 +1,22 @@
 package gllc.tech.blocksteps;
 
-
-import android.app.AlarmManager;
-import android.app.KeyguardManager;
-import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
-import com.crashlytics.android.core.CrashlyticsCore;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.Scopes;
-
-
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Scope;
-import com.google.android.gms.common.api.Status;
 
 
 import com.google.firebase.FirebaseApp;
@@ -44,14 +27,6 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2Session;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2SessionException;
 
-import org.apache.commons.lang3.StringUtils;
-import org.web3j.abi.FunctionEncoder;
-import org.web3j.abi.FunctionReturnDecoder;
-import org.web3j.abi.TypeReference;
-import org.web3j.abi.datatypes.Address;
-import org.web3j.abi.datatypes.Bool;
-import org.web3j.abi.datatypes.Type;
-import org.web3j.abi.datatypes.Uint;
 import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Credentials;
@@ -59,30 +34,15 @@ import org.web3j.crypto.TransactionEncoder;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.request.RawTransaction;
-import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
-import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
-import org.web3j.protocol.core.methods.response.EthSendRawTransaction;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
-import org.web3j.protocol.exceptions.TransactionTimeoutException;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.Web3jFactory;
-import org.web3j.abi.datatypes.Address;
-import org.web3j.abi.datatypes.Function;
-import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.Utf8String;
-import org.web3j.abi.datatypes.generated.Bytes32;
-import org.web3j.abi.datatypes.generated.Uint256;
-import org.web3j.abi.datatypes.generated.Uint8;
-import org.web3j.abi.datatypes.Function;
-import org.web3j.protocol.Web3jService;
-import org.web3j.protocol.core.methods.response.Web3ClientVersion;
 import org.web3j.protocol.parity.Parity;
 import org.web3j.protocol.parity.ParityFactory;
 import org.web3j.protocol.parity.methods.response.PersonalUnlockAccount;
-import org.web3j.tx.Transfer;
 
 import org.web3j.utils.Convert;
 import org.web3j.utils.Numeric;
@@ -90,36 +50,24 @@ import org.web3j.utils.Numeric;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
-import gllc.tech.blocksteps.Objects.SentSteps;
-import gllc.tech.blocksteps.Sensor.StepService;
 import gllc.tech.blocksteps.Sensor.StepService2;
 import io.fabric.sdk.android.Fabric;
 
-import static android.R.attr.value;
-import static java.text.DateFormat.getDateInstance;
-import static java.text.DateFormat.getTimeInstance;
 import static org.web3j.tx.Contract.GAS_LIMIT;
 import static org.web3j.tx.ManagedTransaction.GAS_PRICE;
 
@@ -156,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        FirebaseApp.initializeApp(this);
         uniqueID = getHardwareId(this);
         Fabric.with(this, new Crashlytics());
 
@@ -169,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
 
         assignUI();
         checkForWallet();
+        unlockMainAccount();
 
         Intent i = new Intent(this, StepService2.class);
         startService(i);
@@ -490,15 +440,10 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
 
-            for (int i=0; i>=-6; i--) {
-                loadBlockchainData(i);
-            }
+            for (int i=0; i>=-6; i--) {loadBlockchainData(i);}
 
-            Log.i("--All", "Checking Alarm After Creating Contract");
-            //if (!(SetAlarm.alarmUp(getApplicationContext()))) new SetAlarm(getApplicationContext());
+            Log.i("--All", "Resetting Alarm After Creating Contract");
             SetAlarm.resetAlarm(getApplicationContext());
-
-
         }
     }
 
@@ -525,16 +470,18 @@ public class MainActivity extends AppCompatActivity {
             Log.i("--All", "Error: " + e.getMessage());
             Crashlytics.logException(e);
             e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "Try Reloading Later!", Toast.LENGTH_LONG).show();
         } catch (ExecutionException e) {
             Log.i("--All", "Error: " + e.getMessage());
             Crashlytics.logException(e);
             e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "Try Reloading Later!", Toast.LENGTH_LONG).show();
         }
 
         int index = day * -1;
 
         int avgSteps;
-        if (peopleCount.get(index) != 0) avgSteps = steps / peopleCount.get(index);
+        if (peopleCount.get(index) != 0 && peopleCount.size() != 0) avgSteps = steps / peopleCount.get(index);
         else avgSteps = 0;
 
         //Log.i("--All", "Everyone Steps = " + i);
@@ -707,6 +654,26 @@ public class MainActivity extends AppCompatActivity {
             }
             String transactionHash = ethSendTransaction.getTransactionHash();
             Log.i("--All", "Hash: "+transactionHash);
+        }
+    }
+
+    public void unlockMainAccount() {
+        Parity parity = ParityFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
+        PersonalUnlockAccount personalUnlockAccount = null;
+        try {
+            personalUnlockAccount = parity.personalUnlockAccount(MyApplication.mainEtherAddress, "hellya").sendAsync().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        if (personalUnlockAccount.accountUnlocked()) {
+            // send a transaction, or use parity.personalSignAndSendTransaction() to do it all in one
+            Log.i("--All", "Main Account Unlocked with Parity");
+        } else {
+            Log.i("--All", "Error Unlocking Main Account with Parity");
+            DatabaseReference myRef = database.getReference("Error");
+            myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "Error Unlocking Main Account with Parity - In SendStepsService");
         }
     }
 }
