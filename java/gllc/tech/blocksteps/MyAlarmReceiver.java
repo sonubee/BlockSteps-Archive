@@ -33,7 +33,7 @@ public class MyAlarmReceiver extends BroadcastReceiver {
         editor = sharedPref.edit();
 
         DatabaseReference myRef = database.getReference(sharedPref.getString("uniqueId","NA"));
-        myRef.child("Alarm").push().setValue(SendStepsService.getTimeStamp());
+        myRef.child("Alarm").push().setValue(SendStepsService.getHourlyTimeStamp());
         //Toast.makeText(context, "Alarm Triggered!", Toast.LENGTH_LONG).show();
         */
         Intent i = new Intent(context, SendStepsService.class);

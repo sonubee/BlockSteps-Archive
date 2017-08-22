@@ -65,6 +65,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import gllc.tech.blocksteps.Auomation.DateFormatter;
 import gllc.tech.blocksteps.Sensor.StepService2;
 import io.fabric.sdk.android.Fabric;
 
@@ -118,7 +119,17 @@ public class MainActivity extends AppCompatActivity {
 
         assignUI();
         checkForWallet();
-        unlockMainAccount();
+        try {
+            unlockMainAccount();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
+        }
 
         Intent i = new Intent(this, StepService2.class);
         startService(i);
@@ -204,6 +215,7 @@ public class MainActivity extends AppCompatActivity {
             catch (JSONRPC2SessionException e) {
                 Log.i("--All", "Error: " + e.getMessage());
                 Crashlytics.logException(e);
+                e.printStackTrace();
             }
 
             return response;
@@ -308,7 +320,7 @@ public class MainActivity extends AppCompatActivity {
         return Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
-    public class CreateWallet extends AsyncTask<Void, Void, Void> {
+    private class CreateWallet extends AsyncTask<Void, Void, Void> {
 
         @Override
         protected Void doInBackground(Void... voids) {
@@ -317,8 +329,6 @@ public class MainActivity extends AppCompatActivity {
             String fileName = "not set";
 
             Log.i("--All", "Creating Wallet");
-
-
             try {
                 fileName = WalletUtils.generateNewWalletFile(
                         uniqueID,
@@ -363,12 +373,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public class LoadCredentials extends AsyncTask<Void, Void, Void> {
+    private class LoadCredentials extends AsyncTask<Void, Void, Void> {
 
         @Override
         protected Void doInBackground(Void... voids) {
-
-
             try {
                 credentials = WalletUtils.loadCredentials(
                         uniqueID,
@@ -382,7 +390,6 @@ public class MainActivity extends AppCompatActivity {
                 Crashlytics.logException(e);
                 e.printStackTrace();
             }
-
             return null;
         }
 
@@ -431,8 +438,6 @@ public class MainActivity extends AppCompatActivity {
                 Crashlytics.logException(e);
                 e.printStackTrace();
             }
-
-
             return null;
         }
 
@@ -449,34 +454,29 @@ public class MainActivity extends AppCompatActivity {
 
     public void loadBlockchainData(int day) {
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_YEAR, day);
-        SimpleDateFormat format = new SimpleDateFormat("MMddyy");
-        String formattedDate = format.format(calendar.getTime());
-        if (formattedDate.length() == 6) {formattedDate = formattedDate.substring(1);}
+        String formattedDate = DateFormatter.GetConCatDate(day);
 
-        loadDatesAndSteps(day, formattedDate);
-        loadPeopleCount(day, formattedDate);
-        loadEveryoneSteps(day, formattedDate);
+        try {
+            loadDatesAndSteps(day, formattedDate);
+            loadPeopleCount(day, formattedDate);
+            loadEveryoneSteps(day, formattedDate);
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
+        }
+
     }
 
-    public void loadEveryoneSteps(int day, String formattedDate) {
+    public void loadEveryoneSteps(int day, String formattedDate) throws ExecutionException, InterruptedException {
         Future<Uint256> everyoneSteps = contract.everyoneStepsDate(new Utf8String(formattedDate));
 
         int steps = 0;
-        try {
-            steps = everyoneSteps.get().getValue().intValue();
-        } catch (InterruptedException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            Crashlytics.logException(e);
-            e.printStackTrace();
-            Toast.makeText(getApplicationContext(), "Try Reloading Later!", Toast.LENGTH_LONG).show();
-        } catch (ExecutionException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            Crashlytics.logException(e);
-            e.printStackTrace();
-            Toast.makeText(getApplicationContext(), "Try Reloading Later!", Toast.LENGTH_LONG).show();
-        }
+        steps = everyoneSteps.get().getValue().intValue();
 
         int index = day * -1;
 
@@ -496,42 +496,21 @@ public class MainActivity extends AppCompatActivity {
 
         dialog.dismiss();
     }
-
-    public void loadPeopleCount(int day, String formattedDate) {
+    public void loadPeopleCount(int day, String formattedDate) throws ExecutionException, InterruptedException {
         Future<Uint256> peopleAllCount = contract.countAllPeopleDate(new Utf8String(formattedDate));
 
-        try {
-            if (day == 0 ) peopleCount0.setText(peopleAllCount.get().getValue()+"");
-            if (day == -1 ) peopleCount1.setText(peopleAllCount.get().getValue()+"");
-            if (day == -2 ) peopleCount2.setText(peopleAllCount.get().getValue()+"");
-            if (day == -3 ) peopleCount3.setText(peopleAllCount.get().getValue()+"");
-            if (day == -4 ) peopleCount4.setText(peopleAllCount.get().getValue()+"");
-            if (day == -5 ) peopleCount5.setText(peopleAllCount.get().getValue()+"");
-            if (day == -6 ) peopleCount6.setText(peopleAllCount.get().getValue()+"");
-        } catch (InterruptedException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            Crashlytics.logException(e);
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            Crashlytics.logException(e);
-            e.printStackTrace();
-        }
-
+        if (day == 0 ) peopleCount0.setText(peopleAllCount.get().getValue()+"");
+        if (day == -1 ) peopleCount1.setText(peopleAllCount.get().getValue()+"");
+        if (day == -2 ) peopleCount2.setText(peopleAllCount.get().getValue()+"");
+        if (day == -3 ) peopleCount3.setText(peopleAllCount.get().getValue()+"");
+        if (day == -4 ) peopleCount4.setText(peopleAllCount.get().getValue()+"");
+        if (day == -5 ) peopleCount5.setText(peopleAllCount.get().getValue()+"");
+        if (day == -6 ) peopleCount6.setText(peopleAllCount.get().getValue()+"");
 
         int index = day * -1;
 
-        try {
-            peopleCount.add(index,peopleAllCount.get().getValue().intValue());
-        } catch (InterruptedException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            Crashlytics.logException(e);
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            Crashlytics.logException(e);
-            e.printStackTrace();
-        }
+
+        peopleCount.add(index,peopleAllCount.get().getValue().intValue());
 
         if (day == -6){
             for (int j=0; j>=-6; j--) {
@@ -541,57 +520,48 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void loadDatesAndSteps(int day, String formattedDate) {
+    public void loadDatesAndSteps(int day, String formattedDate) throws ExecutionException, InterruptedException {
 
         //Load My Steps
-        Future<Uint256> mySteps = contract.recallMySteps(new Utf8String(formattedDate));
-        try {
-            Log.i("--All", "My Steps: " + mySteps.get().getValue());
+        Future<Uint256> mySteps;
 
-            Calendar calendar2 = Calendar.getInstance();
-            calendar2.add(Calendar.DAY_OF_YEAR, day);
-            SimpleDateFormat format2 = new SimpleDateFormat("MM/dd");
-            String formattedDate2 = format2.format(calendar2.getTime());
+        mySteps = contract.recallMySteps(new Utf8String(formattedDate));
+        Calendar calendar2 = Calendar.getInstance();
+        calendar2.add(Calendar.DAY_OF_YEAR, day);
+        SimpleDateFormat format2 = new SimpleDateFormat("MM/dd");
+        String formattedDate2 = format2.format(calendar2.getTime());
 
-            if (day == 0) {
-                //todayStepsBig.setText(i+"");
-                day0Steps.setText(mySteps.get().getValue()+"");
-                day0Title.setText(formattedDate2);
-            }
-
-            if (day == -1) {
-                day1Steps.setText(mySteps.get().getValue()+"");
-                day1Title.setText(formattedDate2);
-            }
-            if (day == -2) {
-                day2Steps.setText(mySteps.get().getValue()+"");
-                day2Title.setText(formattedDate2);
-            }
-            if (day == -3) {
-                day3Steps.setText(mySteps.get().getValue()+"");
-                day3Title.setText(formattedDate2);
-            }
-            if (day == -4) {
-                day4Steps.setText(mySteps.get().getValue()+"");
-                day4Title.setText(formattedDate2);
-            }
-            if (day == -5) {
-                day5Steps.setText(mySteps.get().getValue()+"");
-                day5Title.setText(formattedDate2);
-            }
-            if (day == -6) {
-                day6Steps.setText(mySteps.get().getValue()+"");
-                day6Title.setText(formattedDate2);
-            }
-        } catch (InterruptedException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            Crashlytics.logException(e);
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            Log.i("--All", "Error: " + e.getMessage());
-            Crashlytics.logException(e);
-            e.printStackTrace();
+        if (day == 0) {
+            //todayStepsBig.setText(i+"");
+            day0Steps.setText(mySteps.get().getValue()+"");
+            day0Title.setText(formattedDate2);
         }
+
+        if (day == -1) {
+            day1Steps.setText(mySteps.get().getValue()+"");
+            day1Title.setText(formattedDate2);
+        }
+        if (day == -2) {
+            day2Steps.setText(mySteps.get().getValue()+"");
+            day2Title.setText(formattedDate2);
+        }
+        if (day == -3) {
+            day3Steps.setText(mySteps.get().getValue()+"");
+            day3Title.setText(formattedDate2);
+        }
+        if (day == -4) {
+            day4Steps.setText(mySteps.get().getValue()+"");
+            day4Title.setText(formattedDate2);
+        }
+        if (day == -5) {
+            day5Steps.setText(mySteps.get().getValue()+"");
+            day5Title.setText(formattedDate2);
+        }
+        if (day == -6) {
+            day6Steps.setText(mySteps.get().getValue()+"");
+            day6Title.setText(formattedDate2);
+        }
+
     }
 
     public void sendEtherToThisAccount() {
@@ -657,16 +627,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void unlockMainAccount() {
+    public void unlockMainAccount() throws ExecutionException, InterruptedException {
         Parity parity = ParityFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
         PersonalUnlockAccount personalUnlockAccount = null;
-        try {
-            personalUnlockAccount = parity.personalUnlockAccount(MyApplication.mainEtherAddress, "hellya").sendAsync().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
+
+        personalUnlockAccount = parity.personalUnlockAccount(MyApplication.mainEtherAddress, "hellya").sendAsync().get();
+
         if (personalUnlockAccount.accountUnlocked()) {
             // send a transaction, or use parity.personalSignAndSendTransaction() to do it all in one
             Log.i("--All", "Main Account Unlocked with Parity");

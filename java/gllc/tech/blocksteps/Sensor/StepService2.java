@@ -1,7 +1,6 @@
 package gllc.tech.blocksteps.Sensor;
 
 import android.app.Activity;
-import android.app.IntentService;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -20,9 +19,7 @@ import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.content.WakefulBroadcastReceiver;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.firebase.FirebaseApp;
@@ -41,9 +38,7 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
     private SensorManager sensorManager;
     private Sensor accel;
     public static int numSteps;
-    public static boolean isIntentServiceRunning = false;
     public static final String ACTION = "gllc.tech.blocksteps.SendStepsService";
-    BroadcastReceiver receiver;
     private Looper mServiceLooper;
     private ServiceHandler mServiceHandler;
     SharedPreferences sharedPref;
@@ -97,7 +92,7 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
         msg.arg1 = startId;
         mServiceHandler.sendMessage(msg);
 
-        registerListener();
+        registerSensorListener();
 
         //to set main ui with steps
         Intent in = new Intent(ACTION);
@@ -113,20 +108,7 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
         return START_STICKY;
     }
 
-    public class PhoneUnlockedReceiver extends BroadcastReceiver {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(Intent.ACTION_USER_PRESENT)){
-                Log.d("--All", "Phone unlocked");
-            }else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)){
-                Log.d("--All", "Phone locked");
-            }
-        }
-    }
-
-    public void registerListener(){
-        isIntentServiceRunning = true;
+    public void registerSensorListener(){
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         simpleStepDetector = new StepDetector();
@@ -140,12 +122,6 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
         Log.i("--All", "StepService2 On Destroy");
         sensorManager.unregisterListener(this);
         sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_FASTEST);
-
-        receiver = new StepService2.PhoneUnlockedReceiver();
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_USER_PRESENT);
-        filter.addAction(Intent.ACTION_SCREEN_OFF);
-        registerReceiver(receiver, filter);
     }
 
     @Nullable
@@ -180,7 +156,6 @@ public class StepService2 extends Service implements SensorEventListener, StepLi
         // Fire the broadcast with intent packaged
         LocalBroadcastManager.getInstance(this).sendBroadcast(in);
 
-        Log.i("--All", "Checking Alarm From StepService2");
         if (!(SetAlarm.alarmUp(getApplicationContext()))) new SetAlarm(getApplicationContext());
     }
 }
