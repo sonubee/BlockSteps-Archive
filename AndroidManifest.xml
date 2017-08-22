@@ -15,12 +15,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <receiver android:name=".BootBroadcastReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
-
         <receiver
             android:name=".MyAlarmReceiver"
             android:process=":remote" >
@@ -36,10 +30,6 @@
 
         <service
             android:name=".Sensor.StepService"
-            android:exported="false"/>
-
-        <service
-            android:name=".Sensor.StepService2"
             android:exported="false"/>
 
         <activity android:name=".MainActivity"

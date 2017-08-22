@@ -14,7 +14,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 
@@ -66,7 +65,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import gllc.tech.blocksteps.Auomation.DateFormatter;
-import gllc.tech.blocksteps.Sensor.StepService2;
+import gllc.tech.blocksteps.Sensor.StepService;
 import io.fabric.sdk.android.Fabric;
 
 import static org.web3j.tx.Contract.GAS_LIMIT;
@@ -131,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
             Crashlytics.logException(e);
         }
 
-        Intent i = new Intent(this, StepService2.class);
+        Intent i = new Intent(this, StepService.class);
         startService(i);
     }
 
@@ -148,11 +147,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         // Register for the particular broadcast based on ACTION string
-        IntentFilter filter = new IntentFilter(StepService2.ACTION);
+        IntentFilter filter = new IntentFilter(StepService.ACTION);
         LocalBroadcastManager.getInstance(this).registerReceiver(testReceiver, filter);
         // or `registerReceiver(testReceiver, filter)` for a normal broadcast
-        todayStepsBig.setText(StepService2.numSteps+"");
-        day0Steps.setText(StepService2.numSteps+"");
+        todayStepsBig.setText(StepService.numSteps+"");
+        day0Steps.setText(StepService.numSteps+"");
     }
 
     // Define the callback for what to do when data is received

@@ -20,7 +20,7 @@ import java.util.concurrent.Future;
 
 import gllc.tech.blocksteps.Auomation.DateFormatter;
 import gllc.tech.blocksteps.Objects.SentSteps;
-import gllc.tech.blocksteps.Sensor.StepService2;
+import gllc.tech.blocksteps.Sensor.StepService;
 import io.fabric.sdk.android.Fabric;
 
 /**
@@ -88,7 +88,7 @@ public class SendStepsService extends IntentService {
 
         if (currentDate > lastDate) {
             Log.i("--All", "Resetting");
-            StepService2.numSteps =0;
+            StepService.numSteps =0;
             editor.putInt("steps", 0).commit();
             editor.putInt("lastDate",currentDate).commit();
 
