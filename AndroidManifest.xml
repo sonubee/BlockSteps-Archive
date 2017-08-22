@@ -15,21 +15,28 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <receiver android:name=".Services.BootBroadcastReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+
         <receiver
-            android:name=".MyAlarmReceiver"
+            android:name=".Services.MyAlarmReceiver"
             android:process=":remote" >
         </receiver>
 
         <service
-            android:name=".SendStepsService"
+            android:name=".Services.SendStepsService"
             android:exported="false" />
 
         <service
-            android:name=".MyTestService"
+            android:name=".Services.LaunchedService"
             android:exported="false" />
 
         <service
-            android:name=".Sensor.StepService"
+            android:name=".Services.StepService"
             android:exported="false"/>
 
         <activity android:name=".MainActivity"
