@@ -1,4 +1,4 @@
-package gllc.tech.blocksteps;
+package gllc.tech.blocksteps.Services;
 
 import android.app.IntentService;
 import android.content.Intent;
@@ -19,8 +19,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import gllc.tech.blocksteps.Auomation.DateFormatter;
+import gllc.tech.blocksteps.MainActivity;
 import gllc.tech.blocksteps.Objects.SentSteps;
-import gllc.tech.blocksteps.Sensor.StepService;
+import gllc.tech.blocksteps.Auomation.SetAlarm;
 import io.fabric.sdk.android.Fabric;
 
 /**
@@ -43,7 +44,6 @@ public class SendStepsService extends IntentService {
     public void onCreate() {
         super.onCreate(); // if you override onCreate(), make sure to call super().
         // If a Context object is needed, call getApplicationContext() here.
-        Log.i("--All", "onCreate - SendStepsService");
         sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         editor = sharedPref.edit();
         FirebaseApp.initializeApp(this);
@@ -52,8 +52,6 @@ public class SendStepsService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        Log.i("--All", "onHandleIntent - Send Steps Service");
-
         DatabaseReference myRef2 = database.getReference(sharedPref.getString("uniqueId","NA"));
         myRef2.child("Alarm-SendStepsService").push().setValue(DateFormatter.getHourlyTimeStamp());
 

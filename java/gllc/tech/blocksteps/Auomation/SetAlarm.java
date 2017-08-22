@@ -1,13 +1,14 @@
-package gllc.tech.blocksteps;
+package gllc.tech.blocksteps.Auomation;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.util.Calendar;
+
+import gllc.tech.blocksteps.Services.MyAlarmReceiver;
 
 /**
  * Created by bhangoo on 8/18/2017.

@@ -1,11 +1,8 @@
-package gllc.tech.blocksteps.Sensor;
+package gllc.tech.blocksteps.Services;
 
 import android.app.Activity;
 import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -24,7 +21,9 @@ import android.util.Log;
 import com.crashlytics.android.Crashlytics;
 import com.google.firebase.FirebaseApp;
 
-import gllc.tech.blocksteps.SetAlarm;
+import gllc.tech.blocksteps.Sensor.StepDetector;
+import gllc.tech.blocksteps.Sensor.StepListener;
+import gllc.tech.blocksteps.Auomation.SetAlarm;
 import io.fabric.sdk.android.Fabric;
 
 /**
@@ -38,7 +37,7 @@ public class StepService extends Service implements SensorEventListener, StepLis
     private SensorManager sensorManager;
     private Sensor accel;
     public static int numSteps;
-    public static final String ACTION = "gllc.tech.blocksteps.SendStepsService";
+    public static final String ACTION = "gllc.tech.blocksteps.Services.SendStepsService";
     private Looper mServiceLooper;
     private ServiceHandler mServiceHandler;
     SharedPreferences sharedPref;
@@ -52,8 +51,6 @@ public class StepService extends Service implements SensorEventListener, StepLis
         Fabric.with(this, new Crashlytics());
         sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         editor = sharedPref.edit();
-
-        Log.i("--All", "StepService onCreate = " + sharedPref.getInt("steps",0));
 
         numSteps = sharedPref.getInt("steps",0);
 
@@ -74,18 +71,15 @@ public class StepService extends Service implements SensorEventListener, StepLis
 
         public ServiceHandler(Looper looper) {
             super(looper);
-            Log.i("--All", "StepService ServiceHandler");
         }
         @Override
         public void handleMessage(Message msg) {
-            Log.i("--All", "StepService - Handle Message inside ServiceHandler");
             // Normally we would do some work here, like download a file.
         }
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i("--All", "StepService onStartCommand");
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
         Message msg = mServiceHandler.obtainMessage();

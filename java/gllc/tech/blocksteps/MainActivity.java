@@ -55,9 +55,7 @@ import java.net.URL;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +63,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import gllc.tech.blocksteps.Auomation.DateFormatter;
-import gllc.tech.blocksteps.Sensor.StepService;
+import gllc.tech.blocksteps.Auomation.SetAlarm;
+import gllc.tech.blocksteps.Auomation._Users_Admin_Desktop_Steps_sol_Steps;
+import gllc.tech.blocksteps.Services.StepService;
 import io.fabric.sdk.android.Fabric;
 
 import static org.web3j.tx.Contract.GAS_LIMIT;
@@ -73,10 +73,7 @@ import static org.web3j.tx.ManagedTransaction.GAS_PRICE;
 
 
 public class MainActivity extends AppCompatActivity {
-    public static final String TAG = "--All";
-    private static final String AUTH_PENDING = "auth_state_pending";
-    private boolean authInProgress = false;
-    //public static GoogleApiClient mClient = null;
+
     ArrayList<Integer> peopleCount = new ArrayList<>();
     String uniqueID;
     ProgressDialog dialog;
@@ -118,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
 
         assignUI();
         checkForWallet();
+
         try {
             unlockMainAccount();
         } catch (ExecutionException e) {
@@ -135,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkForWallet() {
+        //editor.putString("walletFileName", "none").commit();
         if (sharedPref.getString("walletFileName","none").equals("none")){
             firstLoad=true;
             new CreateWallet().execute();
@@ -168,12 +167,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    public class ContactBlockchain extends AsyncTask<Object, Void, JSONRPC2Response> {
-
-        String method;
-        String extra;
-        SharedPreferences sharedPref;
-        int day=1;
+    public class SendEtherFromMainAccount extends AsyncTask<Object, Void, JSONRPC2Response> {
 
         @Override
         protected JSONRPC2Response doInBackground(Object... objects) {
@@ -186,29 +180,16 @@ public class MainActivity extends AppCompatActivity {
             // Create new JSON-RPC 2.0 client session
             JSONRPC2Session mySession = new JSONRPC2Session(serverURL);
 
-            // Construct new request
-            method = (String)objects[0];
-            Object params = objects[1];
-            int id = (Integer)objects[2];
-            sharedPref = (SharedPreferences)objects[3];
-            extra = (String)objects[4];
+            List<Object> listObjects = new ArrayList<>();
+            Map mapValues = new HashMap();
+            mapValues.put("from", MyApplication.mainEtherAddress);
+            mapValues.put("to",sharedPref.getString("ethAddress","none"));
+            mapValues.put("value","0xDE0B6B3A7640000");
 
-            if (extra.equals("getSteps") || extra.equals("getPeople") || extra.equals("getEveryoneSteps")) {
-                day = (Integer)objects[5];
-            }
+            listObjects.add(mapValues);
 
-            //Log.i("--All", "Method: " + method + " - Extra: " + extra);
-
-            JSONRPC2Request request = null;
             JSONRPC2Response response = null;
-
-            if (params instanceof List<?>){
-                List<Object> castedParams = (List<Object>)params;
-                request = new JSONRPC2Request(method, castedParams, id);
-            } else if (params instanceof Map<?, ?>) {
-                Map<String, Object> castedParams = (Map<String, Object>) params;
-                request = new JSONRPC2Request(method, castedParams, id);
-            }
+            JSONRPC2Request request = new JSONRPC2Request("eth_sendTransaction", listObjects, 99);
 
             try {response = mySession.send(request);}
             catch (JSONRPC2SessionException e) {
@@ -226,40 +207,16 @@ public class MainActivity extends AppCompatActivity {
             // Print response result / error
             try {response.indicatesSuccess();
                 if (response.indicatesSuccess()) {
-                    Log.i("--All", "*******Successful Server Response: " + response.getResult() +"*******");
+                    Log.i("--All", "Successfully Sent Ether");
 
-                    if (method.equals("personal_unlockAccount") && extra.equals("mainUnlock")) {
-                        //Send Ether to new Address
-                        Log.i("--All", "Successfully Unlocked, now Sending Ether");
-
-                        List<Object> params3 = new ArrayList<>();
-
-                        Map params = new HashMap();
-                        params.put("from", MyApplication.mainEtherAddress);
-                        params.put("to",sharedPref.getString("ethAddress","none"));
-                        params.put("value","0xDE0B6B3A7640000");
-
-                        params3.add(params);
-
-                        //Log.i("--All", params.toString());
-
-                        DatabaseReference myRef = database.getReference(sharedPref.getString("uniqueId","NA"));
-                        myRef.child("First Load").push().setValue("Sending Ether to New Account");
-
-                        new ContactBlockchain().execute("eth_sendTransaction",params3,99, sharedPref,"mainUnlock");
-                    }
-
-                    if (method.equals("eth_sendTransaction") && extra.equals("mainUnlock")) {
-                        //loadData();
-                        DatabaseReference myRef = database.getReference(sharedPref.getString("uniqueId","NA"));
-                        myRef.child("First Load").push().setValue("Sent, now Loading Contract");
-                        if (firstLoad) new CreateContract().execute();
-                        firstLoad = false;
-                    }
+                    DatabaseReference myRef = database.getReference(sharedPref.getString("uniqueId","NA"));
+                    myRef.child("First Load").push().setValue("Sent, now Loading Contract");
+                    if (firstLoad) new CreateContract().execute();
+                    firstLoad = false;
 
                 }
                 else{
-                    Log.e("--All", "Error in PostExecute: " + response.getError().getMessage());
+                    Log.e("--All", "Error in Sending Ether from Main Account: " + response.getError().getMessage());
 
                     DatabaseReference myRef = database.getReference("Error");
                     myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + response.getError().toString() + " - In MainActivity");
@@ -267,12 +224,10 @@ public class MainActivity extends AppCompatActivity {
                 }
 
             } catch (Exception e) {
-                //Toast.makeText(getApplicationContext(), "Exception: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 e.printStackTrace();
                 Log.i("--All", "Error: " + e.getMessage());
                 Crashlytics.logException(e);
             }
-
         }
     }
 
@@ -323,11 +278,12 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected Void doInBackground(Void... voids) {
+            Log.i("--All", "Creating Wallet");
+            DatabaseReference myRef = database.getReference(sharedPref.getString("uniqueId","NA"));
+            myRef.child("First Load").push().setValue("Creating Wallet");
 
             //Creating wallet
             String fileName = "not set";
-
-            Log.i("--All", "Creating Wallet");
             try {
                 fileName = WalletUtils.generateNewWalletFile(
                         uniqueID,
@@ -404,15 +360,29 @@ public class MainActivity extends AppCompatActivity {
             myRef.child("Address").setValue(credentials.getAddress());
 
             if (firstLoad) {
-                //////Old Way
-                List<Object> params = new ArrayList<>();
-                params.add(MyApplication.mainEtherAddress);
-                params.add("hellya");
-                params.add(0);
 
-                Log.i("--All", "Unlocking Account to send Ether: " + MyApplication.mainEtherAddress);
+                boolean unlockedMain = false;
 
-                new ContactBlockchain().execute("personal_unlockAccount",params,99, sharedPref,"mainUnlock");
+                try {
+                    unlockedMain = unlockMainAccount();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                    Log.i("--All", "Error: " + e.getMessage());
+                    Crashlytics.logException(e);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    Log.i("--All", "Error: " + e.getMessage());
+                    Crashlytics.logException(e);
+                }
+
+                if (unlockedMain) {
+                    Log.i("--All", "Successfully Unlocked, now Sending Ether");
+
+                    DatabaseReference myRef2 = database.getReference(sharedPref.getString("uniqueId","NA"));
+                    myRef2.child("First Load").push().setValue("Sending Ether to New Account");
+
+                    new SendEtherFromMainAccount().execute();
+                }
 
                 ////// New Way
                 //sendEtherToThisAccount();
@@ -469,21 +439,19 @@ public class MainActivity extends AppCompatActivity {
             Crashlytics.logException(e);
         }
 
+        dialog.dismiss();
+
     }
 
     public void loadEveryoneSteps(int day, String formattedDate) throws ExecutionException, InterruptedException {
         Future<Uint256> everyoneSteps = contract.everyoneStepsDate(new Utf8String(formattedDate));
 
-        int steps = 0;
-        steps = everyoneSteps.get().getValue().intValue();
-
+        int steps = everyoneSteps.get().getValue().intValue();
         int index = day * -1;
-
         int avgSteps;
+
         if (peopleCount.get(index) != 0 && peopleCount.size() != 0) avgSteps = steps / peopleCount.get(index);
         else avgSteps = 0;
-
-        //Log.i("--All", "Everyone Steps = " + i);
 
         if (day == 0 ) avgPeopleSteps0.setText(avgSteps+"");
         if (day == -1 ) avgPeopleSteps1.setText(avgSteps+"");
@@ -492,9 +460,8 @@ public class MainActivity extends AppCompatActivity {
         if (day == -4 ) avgPeopleSteps4.setText(avgSteps+"");
         if (day == -5 ) avgPeopleSteps5.setText(avgSteps+"");
         if (day == -6 ) avgPeopleSteps6.setText(avgSteps+"");
-
-        dialog.dismiss();
     }
+
     public void loadPeopleCount(int day, String formattedDate) throws ExecutionException, InterruptedException {
         Future<Uint256> peopleAllCount = contract.countAllPeopleDate(new Utf8String(formattedDate));
 
@@ -506,61 +473,43 @@ public class MainActivity extends AppCompatActivity {
         if (day == -5 ) peopleCount5.setText(peopleAllCount.get().getValue()+"");
         if (day == -6 ) peopleCount6.setText(peopleAllCount.get().getValue()+"");
 
-        int index = day * -1;
-
-
-        peopleCount.add(index,peopleAllCount.get().getValue().intValue());
-
-        if (day == -6){
-            for (int j=0; j>=-6; j--) {
-                //getSteps(i);
-                //makeEthCall(j, "getEveryoneSteps", MyApplication.everyoneStepsDate);
-            }
-        }
+        peopleCount.add((day * -1),peopleAllCount.get().getValue().intValue());
     }
 
     public void loadDatesAndSteps(int day, String formattedDate) throws ExecutionException, InterruptedException {
 
-        //Load My Steps
-        Future<Uint256> mySteps;
-
-        mySteps = contract.recallMySteps(new Utf8String(formattedDate));
-        Calendar calendar2 = Calendar.getInstance();
-        calendar2.add(Calendar.DAY_OF_YEAR, day);
-        SimpleDateFormat format2 = new SimpleDateFormat("MM/dd");
-        String formattedDate2 = format2.format(calendar2.getTime());
+        Future<Uint256> mySteps = contract.recallMySteps(new Utf8String(formattedDate));
 
         if (day == 0) {
             //todayStepsBig.setText(i+"");
             day0Steps.setText(mySteps.get().getValue()+"");
-            day0Title.setText(formattedDate2);
+            day0Title.setText(DateFormatter.GetMonthYear(day));
         }
 
         if (day == -1) {
             day1Steps.setText(mySteps.get().getValue()+"");
-            day1Title.setText(formattedDate2);
+            day1Title.setText(DateFormatter.GetMonthYear(day));
         }
         if (day == -2) {
             day2Steps.setText(mySteps.get().getValue()+"");
-            day2Title.setText(formattedDate2);
+            day2Title.setText(DateFormatter.GetMonthYear(day));
         }
         if (day == -3) {
             day3Steps.setText(mySteps.get().getValue()+"");
-            day3Title.setText(formattedDate2);
+            day3Title.setText(DateFormatter.GetMonthYear(day));
         }
         if (day == -4) {
             day4Steps.setText(mySteps.get().getValue()+"");
-            day4Title.setText(formattedDate2);
+            day4Title.setText(DateFormatter.GetMonthYear(day));
         }
         if (day == -5) {
             day5Steps.setText(mySteps.get().getValue()+"");
-            day5Title.setText(formattedDate2);
+            day5Title.setText(DateFormatter.GetMonthYear(day));
         }
         if (day == -6) {
             day6Steps.setText(mySteps.get().getValue()+"");
-            day6Title.setText(formattedDate2);
+            day6Title.setText(DateFormatter.GetMonthYear(day));
         }
-
     }
 
     public void sendEtherToThisAccount() {
@@ -626,19 +575,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void unlockMainAccount() throws ExecutionException, InterruptedException {
+    public boolean unlockMainAccount() throws ExecutionException, InterruptedException {
         Parity parity = ParityFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
-        PersonalUnlockAccount personalUnlockAccount = null;
+        PersonalUnlockAccount personalUnlockAccount = parity.personalUnlockAccount(MyApplication.mainEtherAddress, "hellya").sendAsync().get();
 
-        personalUnlockAccount = parity.personalUnlockAccount(MyApplication.mainEtherAddress, "hellya").sendAsync().get();
+        boolean unlocked = false;
 
         if (personalUnlockAccount.accountUnlocked()) {
             // send a transaction, or use parity.personalSignAndSendTransaction() to do it all in one
             Log.i("--All", "Main Account Unlocked with Parity");
+            unlocked = true;
         } else {
             Log.i("--All", "Error Unlocking Main Account with Parity");
             DatabaseReference myRef = database.getReference("Error");
             myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "Error Unlocking Main Account with Parity - In SendStepsService");
         }
+        return unlocked;
     }
 }

@@ -22,8 +22,15 @@ public class DateFormatter {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_YEAR, 0);
         SimpleDateFormat format = new SimpleDateFormat("HH:mm - MM/dd/yy");
-        String formattedDate = format.format(calendar.getTime());
 
-        return formattedDate;
+        return format.format(calendar.getTime());
+    }
+
+    public static String GetMonthYear(int day) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_YEAR, day);
+        SimpleDateFormat format = new SimpleDateFormat("MM/dd");
+
+        return format.format(calendar.getTime());
     }
 }

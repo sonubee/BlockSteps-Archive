@@ -1,16 +1,11 @@
-package gllc.tech.blocksteps;
+package gllc.tech.blocksteps.Services;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+import gllc.tech.blocksteps.Services.SendStepsService;
 
 /**
  * Created by bhangoo on 7/28/2017.
@@ -18,7 +13,7 @@ import com.google.firebase.database.FirebaseDatabase;
 
 public class MyAlarmReceiver extends BroadcastReceiver {
     public static final int REQUEST_CODE = 12345;
-    public static final String ACTION_ALARM_RECEIVER = "gllc.tech.blocksteps.MyAlarmReceiver";
+    public static final String ACTION_ALARM_RECEIVER = "gllc.tech.blocksteps.Services.MyAlarmReceiver";
     //FirebaseDatabase database = FirebaseDatabase.getInstance();
     //SharedPreferences sharedPref;
     //SharedPreferences.Editor editor;
