@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import gllc.tech.blocksteps.Auomation.DateFormatter;
+import gllc.tech.blocksteps.BuildConfig;
 import gllc.tech.blocksteps.MainActivity;
 import gllc.tech.blocksteps.Objects.SentSteps;
 import gllc.tech.blocksteps.Auomation.SetAlarm;
@@ -53,7 +54,7 @@ public class SendStepsService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         DatabaseReference myRef2 = database.getReference(sharedPref.getString("uniqueId","NA"));
-        myRef2.child("Alarm-SendStepsService").push().setValue(DateFormatter.getHourlyTimeStamp());
+        myRef2.child("Alarm-SendStepsService").push().setValue(DateFormatter.getHourlyTimeStamp() + " - Version " + BuildConfig.VERSION_NAME);
 
         int lastDate = sharedPref.getInt("lastDate",0);
         int currentDate = Integer.parseInt(DateFormatter.GetConCatDate(0));
@@ -69,19 +70,27 @@ public class SendStepsService extends IntentService {
                 e.printStackTrace();
                 Log.i("--All", "Error: " + e.getMessage());
                 Crashlytics.logException(e);
+                DatabaseReference myRef = database.getReference("Error");
+                myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "Error In SendStepsService onHandleIntent: " + e.getMessage());
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Log.i("--All", "Error: " + e.getMessage());
                 Crashlytics.logException(e);
+                DatabaseReference myRef = database.getReference("Error");
+                myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "Error In SendStepsService onHandleIntent: " + e.getMessage());
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+                Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
+                DatabaseReference myRef = database.getReference("Error");
+                myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "NullPointerException In SendStepsService onHandleIntent: " + e.getMessage());
+            }catch (Exception e) {
+                e.printStackTrace();
+                Log.i("--All", "Error: " + e.getMessage());
+                Crashlytics.logException(e);
+                DatabaseReference myRef = database.getReference("Error");
+                myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "General Exception In SendStepsService onHandleIntent: " + e.getMessage());
             }
-
-            //might not be best place to put!!!
-            editor.putInt("lastSteps",steps).commit();
-
-            Log.i("--All", "Sending to Firebase");
-            SentSteps sentSteps = new SentSteps(DateFormatter.getHourlyTimeStamp(), steps, sharedPref.getString("uniqueId","NA"));
-            DatabaseReference myRef = database.getReference(sharedPref.getString("uniqueId","NA"));
-            myRef.child("SentSteps").push().setValue(sentSteps);
         }
 
         if (currentDate > lastDate) {
@@ -99,6 +108,13 @@ public class SendStepsService extends IntentService {
         Log.i("--All", "Invoking Method Save Steps");
         Future<TransactionReceipt> transactionReceiptFuture = MainActivity.contract.saveMySteps(new Uint256(steps),new Utf8String(Integer.toString(date)));
         Log.i("--All", "Hash: "+transactionReceiptFuture.get().getTransactionHash());
+
+        editor.putInt("lastSteps",steps).commit();
+
+        Log.i("--All", "Sending to Firebase");
+        SentSteps sentSteps = new SentSteps(DateFormatter.getHourlyTimeStamp(), steps, sharedPref.getString("uniqueId","NA"));
+        DatabaseReference myRef = database.getReference(sharedPref.getString("uniqueId","NA"));
+        myRef.child("SentSteps").push().setValue(sentSteps);
     }
 }
 

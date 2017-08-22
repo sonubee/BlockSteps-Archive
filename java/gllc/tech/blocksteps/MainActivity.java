@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList<Integer> peopleCount = new ArrayList<>();
     String uniqueID;
-    ProgressDialog dialog;
+    ProgressDialog startingDialog, creatingAccount, loadingAccount, settingUp;
 
     boolean firstLoad = false;
 
@@ -109,9 +109,9 @@ public class MainActivity extends AppCompatActivity {
         editor = sharedPref.edit();
         editor.putString("uniqueId",uniqueID).commit();
 
-        dialog = new ProgressDialog(MainActivity.this);
-        dialog.setMessage("Loading From BlockChain - Can Take A While");
-        dialog.show();
+        startingDialog = new ProgressDialog(MainActivity.this);
+        startingDialog.setMessage("Loading From BlockChain - Can Take A While");
+        startingDialog.show();
 
         assignUI();
         checkForWallet();
@@ -135,6 +135,11 @@ public class MainActivity extends AppCompatActivity {
     private void checkForWallet() {
         //editor.putString("walletFileName", "none").commit();
         if (sharedPref.getString("walletFileName","none").equals("none")){
+            startingDialog.dismiss();
+            creatingAccount = new ProgressDialog(MainActivity.this);
+            creatingAccount.setMessage("First Time Loading - Setting Up");
+            creatingAccount.show();
+
             firstLoad=true;
             new CreateWallet().execute();
         }
@@ -211,8 +216,8 @@ public class MainActivity extends AppCompatActivity {
 
                     DatabaseReference myRef = database.getReference(sharedPref.getString("uniqueId","NA"));
                     myRef.child("First Load").push().setValue("Sent, now Loading Contract");
-                    if (firstLoad) new CreateContract().execute();
-                    firstLoad = false;
+
+                    new CreateContract().execute();
 
                 }
                 else{
@@ -320,6 +325,11 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
 
+            creatingAccount.dismiss();
+            loadingAccount = new ProgressDialog(MainActivity.this);
+            loadingAccount.setMessage("Loading");
+            loadingAccount.show();
+
             Log.i("--All", "Loading Wallet (from Wallet Creation)");
             DatabaseReference myRef = database.getReference(sharedPref.getString("uniqueId","NA"));
             myRef.child("First Load").push().setValue("Loading Wallet (from Wallet Creation)");
@@ -360,6 +370,11 @@ public class MainActivity extends AppCompatActivity {
             myRef.child("Address").setValue(credentials.getAddress());
 
             if (firstLoad) {
+
+                loadingAccount.dismiss();
+                settingUp = new ProgressDialog(MainActivity.this);
+                settingUp.setMessage("Almost Done...");
+                settingUp.show();
 
                 boolean unlockedMain = false;
 
@@ -437,9 +452,18 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
             Log.i("--All", "Error: " + e.getMessage());
             Crashlytics.logException(e);
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
+        }catch (Exception e) {
+            e.printStackTrace();
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
         }
 
-        dialog.dismiss();
+        if (firstLoad) settingUp.dismiss();
+        else startingDialog.dismiss();
 
     }
 
@@ -532,10 +556,9 @@ public class MainActivity extends AppCompatActivity {
             Log.i("--All", "Account Unlocked with Parity - SendEtherToThisAccount");
 
             EthGetTransactionCount ethGetTransactionCount = null;
-            try {
-                ethGetTransactionCount = web3.ethGetTransactionCount(
-                        MyApplication.mainEtherAddress, DefaultBlockParameterName.LATEST).sendAsync().get();
-            } catch (InterruptedException e) {
+            try {ethGetTransactionCount = web3.ethGetTransactionCount(MyApplication.mainEtherAddress, DefaultBlockParameterName.LATEST).sendAsync().get();}
+
+            catch (InterruptedException e) {
                 Log.i("--All", "Error: " + e.getMessage());
                 Crashlytics.logException(e);
                 e.printStackTrace();
@@ -579,17 +602,14 @@ public class MainActivity extends AppCompatActivity {
         Parity parity = ParityFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
         PersonalUnlockAccount personalUnlockAccount = parity.personalUnlockAccount(MyApplication.mainEtherAddress, "hellya").sendAsync().get();
 
-        boolean unlocked = false;
-
         if (personalUnlockAccount.accountUnlocked()) {
-            // send a transaction, or use parity.personalSignAndSendTransaction() to do it all in one
             Log.i("--All", "Main Account Unlocked with Parity");
-            unlocked = true;
+            return true;
         } else {
             Log.i("--All", "Error Unlocking Main Account with Parity");
             DatabaseReference myRef = database.getReference("Error");
-            myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "Error Unlocking Main Account with Parity - In SendStepsService");
+            myRef.child(sharedPref.getString("uniqueId", "NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "Error Unlocking Main Account with Parity - In MainActivity");
+            return false;
         }
-        return unlocked;
     }
 }
