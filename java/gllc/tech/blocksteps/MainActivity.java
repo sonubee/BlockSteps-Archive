@@ -32,6 +32,7 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.TransactionEncoder;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.request.RawTransaction;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
@@ -61,12 +62,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import gllc.tech.blocksteps.Auomation.DateFormatter;
 import gllc.tech.blocksteps.Auomation.SetAlarm;
 import gllc.tech.blocksteps.Auomation._Users_Admin_Desktop_Steps_sol_Steps;
 import gllc.tech.blocksteps.Services.StepService;
 import io.fabric.sdk.android.Fabric;
+import rx.Subscription;
+import rx.functions.Action1;
 
 import static org.web3j.tx.Contract.GAS_LIMIT;
 import static org.web3j.tx.ManagedTransaction.GAS_PRICE;
@@ -93,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
     FirebaseDatabase database = FirebaseDatabase.getInstance();
 
     Credentials credentials = null;
-    Web3j web3 = Web3jFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
+    Web3j web3;
     public static _Users_Admin_Desktop_Steps_sol_Steps contract;
 
     @Override
@@ -103,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
 
         FirebaseApp.initializeApp(this);
         uniqueID = getHardwareId(this);
-        Fabric.with(this, new Crashlytics());
+        //Fabric.with(this, new Crashlytics());
 
         sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         editor = sharedPref.edit();
@@ -112,6 +116,14 @@ public class MainActivity extends AppCompatActivity {
         startingDialog = new ProgressDialog(MainActivity.this);
         startingDialog.setMessage("Loading From BlockChain - Can Take A While");
         startingDialog.show();
+
+        try {
+            web3 = Web3jFactory.build(new HttpService("http://45.55.4.74:8545"));  // defaults to http://localhost:8545/
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.i("--All", "Exception Building WebFactory " + e.getMessage());
+            Crashlytics.logException(e);
+        }
 
         assignUI();
         checkForWallet();
@@ -145,6 +157,32 @@ public class MainActivity extends AppCompatActivity {
         }
 
         else{ new LoadCredentials().execute();}
+
+        try {
+            EthFilter filter = new EthFilter(DefaultBlockParameterName.EARLIEST, DefaultBlockParameterName.LATEST, MyApplication.contractAddress);
+            web3.ethLogObservable(filter).subscribe(new Action1<org.web3j.protocol.core.methods.response.Log>() {
+                @Override
+                public void call(org.web3j.protocol.core.methods.response.Log log) {
+                    Log.i("--All", "FIIIIIIIIIIIIIIIIIINDMEEEE" + log.getTransactionHash());
+                }
+            });
+        } catch (Exception e) {
+            Log.i("--All", "Error: " + e.getMessage());
+        }
+
+        Subscription subscription = web3.blockObservable(false).subscribe();
+
+
+        Subscription subscription = web3.blockObservable(false).subscribe(block -> {
+            Log.i("--All", "FIIIIIIIIIIIIIIIIIINDMEEEE" + "Sweet, block number " + block.getBlock().getNumber() + " has just been created");
+        }, Throwable::printStackTrace);
+        try {
+            TimeUnit.MINUTES.sleep(2);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        subscription.unsubscribe();
+
     }
 
     @Override

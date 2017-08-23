@@ -71,25 +71,29 @@ public class SendStepsService extends IntentService {
                 Log.i("--All", "Error: " + e.getMessage());
                 Crashlytics.logException(e);
                 DatabaseReference myRef = database.getReference("Error");
-                myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "Error In SendStepsService onHandleIntent: " + e.getMessage());
+                myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "Error In SendStepsService onHandleIntent: " +
+                        e.getMessage() + " - " + DateFormatter.getHourlyTimeStamp());
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Log.i("--All", "Error: " + e.getMessage());
                 Crashlytics.logException(e);
                 DatabaseReference myRef = database.getReference("Error");
-                myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "Error In SendStepsService onHandleIntent: " + e.getMessage());
+                myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "Error In SendStepsService onHandleIntent: " +
+                        e.getMessage() + " - " + DateFormatter.getHourlyTimeStamp());
             } catch (NullPointerException e) {
                 e.printStackTrace();
                 Log.i("--All", "Error: " + e.getMessage());
                 Crashlytics.logException(e);
                 DatabaseReference myRef = database.getReference("Error");
-                myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "NullPointerException In SendStepsService onHandleIntent: " + e.getMessage());
+                myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "NullPointerException In SendStepsService onHandleIntent: " +
+                        e.getMessage() + " - " + DateFormatter.getHourlyTimeStamp());
             }catch (Exception e) {
                 e.printStackTrace();
                 Log.i("--All", "Error: " + e.getMessage());
                 Crashlytics.logException(e);
                 DatabaseReference myRef = database.getReference("Error");
-                myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "General Exception In SendStepsService onHandleIntent: " + e.getMessage());
+                myRef.child(sharedPref.getString("uniqueId","NA")).push().setValue("Version " + BuildConfig.VERSION_NAME + ": " + "General Exception In SendStepsService onHandleIntent: " +
+                        e.getMessage() + " - " + DateFormatter.getHourlyTimeStamp());
             }
         }
 
@@ -106,8 +110,9 @@ public class SendStepsService extends IntentService {
 
     public void sendSteps(int steps, int date) throws ExecutionException, InterruptedException {
         Log.i("--All", "Invoking Method Save Steps");
-        Future<TransactionReceipt> transactionReceiptFuture = MainActivity.contract.saveMySteps(new Uint256(steps),new Utf8String(Integer.toString(date)));
-        Log.i("--All", "Hash: "+transactionReceiptFuture.get().getTransactionHash());
+
+        //Future<TransactionReceipt> transactionReceiptFuture = MainActivity.contract.saveMySteps(new Uint256(steps),new Utf8String(Integer.toString(date)));
+        Log.i("--All", "Hash: "+MainActivity.contract.saveMySteps(new Uint256(steps),new Utf8String(Integer.toString(date))).get().getTransactionHash());
 
         editor.putInt("lastSteps",steps).commit();
 
