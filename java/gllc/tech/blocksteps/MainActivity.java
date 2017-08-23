@@ -157,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         else{ new LoadCredentials().execute();}
-
+/*
         try {
             EthFilter filter = new EthFilter(DefaultBlockParameterName.EARLIEST, DefaultBlockParameterName.LATEST, MyApplication.contractAddress);
             web3.ethLogObservable(filter).subscribe(new Action1<org.web3j.protocol.core.methods.response.Log>() {
@@ -169,7 +169,8 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.i("--All", "Error: " + e.getMessage());
         }
-
+        */
+/*
         Subscription subscription = web3.blockObservable(false).subscribe();
 
 
@@ -182,7 +183,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         subscription.unsubscribe();
-
+*/
     }
 
     @Override
@@ -446,7 +447,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public class CreateContract extends AsyncTask<Void, Void, Void> {
+    private class CreateContract extends AsyncTask<Void, Void, Void> {
 
         @Override
         protected Void doInBackground(Void... voids) {
