@@ -385,6 +385,14 @@ public class MainActivity extends AppCompatActivity {
                 credentials = WalletUtils.loadCredentials(
                         uniqueID,
                         getFilesDir().getAbsolutePath() + "/" + sharedPref.getString("walletFileName","none"));
+
+                Log.i("--All", "Credentials Address: " + credentials.getAddress());
+
+                editor.putString("ethAddress",credentials.getAddress()).commit();
+
+                DatabaseReference myRef = database.getReference(uniqueID);
+                myRef.child("Address").setValue(credentials.getAddress());
+
             } catch (IOException e) {
                 Log.i("--All", "Error: " + e.getMessage());
                 Crashlytics.logException(e);
@@ -400,13 +408,6 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-
-            Log.i("--All", "Credentials Address: " + credentials.getAddress());
-
-            editor.putString("ethAddress",credentials.getAddress()).commit();
-
-            DatabaseReference myRef = database.getReference(uniqueID);
-            myRef.child("Address").setValue(credentials.getAddress());
 
             if (firstLoad) {
 

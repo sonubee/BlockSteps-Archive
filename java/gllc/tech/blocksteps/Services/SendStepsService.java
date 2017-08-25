@@ -144,7 +144,7 @@ public class SendStepsService extends IntentService {
 
         //Future<TransactionReceipt> transactionReceiptFuture = MainActivity.contract.saveMySteps(new Uint256(steps),new Utf8String(Integer.toString(date)));
         //Log.i("--All", "Hash: "+MainActivity.contract.saveMySteps(new Uint256(steps),new Utf8String(Integer.toString(date))).get().getTransactionHash());
-        Log.i("--All", "Hash: "+contract.saveMySteps(new Uint256(steps),new Utf8String(Integer.toString(date))).get().getTransactionHash());
+        Log.i("--All", "Hash: "+ contract.saveMySteps(new Uint256(steps),new Utf8String(Integer.toString(date))).get().getTransactionHash());
 
         editor.putInt("lastSteps",steps).commit();
 
@@ -159,6 +159,12 @@ public class SendStepsService extends IntentService {
             credentials = WalletUtils.loadCredentials(
                     sharedPref.getString("uniqueId","NA"),
                     getFilesDir().getAbsolutePath() + "/" + sharedPref.getString("walletFileName","none"));
+
+            Log.i("--All", "Credentials Address from SendStepsService: " + credentials.getAddress());
+
+            Log.i("--All", "Creating Contract from SendStepsService");
+            contract = _Users_Admin_Desktop_Steps_sol_Steps.load(MyApplication.contractAddress, web3, credentials, GAS_PRICE, GAS_LIMIT);
+
         } catch (IOException e) {
             Log.i("--All", "Error: " + e.getMessage());
             Crashlytics.logException(e);
@@ -167,12 +173,11 @@ public class SendStepsService extends IntentService {
             Log.i("--All", "Error: " + e.getMessage());
             Crashlytics.logException(e);
             e.printStackTrace();
+        } catch (Exception e) {
+            Log.i("--All", "Error: " + e.getMessage());
+            Crashlytics.logException(e);
+            e.printStackTrace();
         }
-
-        Log.i("--All", "Credentials Address from SendStepsService: " + credentials.getAddress());
-
-        Log.i("--All", "Creating Contract from SendStepsService");
-        contract = _Users_Admin_Desktop_Steps_sol_Steps.load(MyApplication.contractAddress, web3, credentials, GAS_PRICE, GAS_LIMIT);
 
         try {
             Log.i("--All", "Contract Valid from SendStepsService: " + contract.isValid());
@@ -183,7 +188,6 @@ public class SendStepsService extends IntentService {
         }
 
         beforeSendSteps();
-
     }
 
 }
